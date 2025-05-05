@@ -24,11 +24,11 @@ This service keeps full control of your data and security checks, while offloadi
 ### Why This Architecture?
 
 1. **Single Source of Truth**  
-   All writes go through your backend, so you never “forget” a permission check or domain rule.
+   All writes go through backend
 2. **Managed Scaling**  
-   Firestore and FCM handle the hard stuff (pub/sub, push delivery, offline caching) without you running servers.
+   Firestore and FCM handle the hard stuff (pub/sub, push delivery, offline caching)
 3. **Audit & Security**  
-   Permit.io enforces AuthZ policies centrally. You avoid “shadow writes” and maintain an auditable trail.
+   Permit.io enforces AuthZ policies centrally.
 4. **Developer Focus**  
    No wasted DevOps on socket servers or push infra—focus on core newsletter features.
 
