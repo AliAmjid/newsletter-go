@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
+	"github.com/AliAmjid/newsletter-go/internal/db"
 	"github.com/AliAmjid/newsletter-go/internal/router"
 	"github.com/joho/godotenv"
 )
@@ -15,7 +17,9 @@ func main() {
 	if err != nil {
 		log.Fatal("An error has occured during loading from .env file")
 	}
-	// env values can be used with os.Getenv("POSTGRES_HOST") command
+
+	dbConnectionString := os.Getenv("POSTGRES_CONNECTION_STRING")
+	db.Init(dbConnectionString)
 
 	startServer()
 }
@@ -26,7 +30,7 @@ func startServer() {
 	router := router.NewRouter()
 
 	server := &http.Server{
-		Addr:    ":3001",
+		Addr:    ":3000",
 		Handler: router,
 	}
 
