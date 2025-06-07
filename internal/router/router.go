@@ -14,6 +14,7 @@ func NewRouter() *chi.Mux {
 
 	r.Route("/posts", func(r chi.Router) {
 		r.Get("/{id}", handler.GetPost)
+		r.Post(("/"), handler.CreatePost)
 	})
 
 	return r
