@@ -129,19 +129,34 @@ func (s *Service) Refresh(ctx context.Context, refreshToken string) (string, err
 	return resp.IDToken, nil
 }
 
+type firebaseError struct {
+	Error struct {
+		Message string `json:"message"`
+		Status  string `json:"status"`
+	} `json:"error"`
+}
+
 func doJSON(req *http.Request, out interface{}) error {
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
+
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Response body: %s\n", string(bodyBytes))
+
+	fmt.Printf("Response body: %s,%s\n", string(req.RemoteAddr), string(bodyBytes))
+
 	if resp.StatusCode >= 300 {
-		return fmt.Errorf("firebase error: %s", resp.Status)
+		var fbErr firebaseError
+		if err := json.Unmarshal(bodyBytes, &fbErr); err != nil {
+			return fmt.Errorf("firebase error: %s", resp.Status)
+		}
+		return fmt.Errorf("firebase error: %s", fbErr.Error.Message)
 	}
+
 	return json.Unmarshal(bodyBytes, out)
 }

@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"net/http"
+	userusecase "newsletter-go/internal/usecase/user"
 
 	"github.com/go-chi/chi/v5"
 
@@ -11,16 +12,18 @@ import (
 
 type AuthHandler struct {
 	service *authusecase.Service
+	users   *userusecase.Service
 }
 
-func NewAuthHandler(r chi.Router, s *authusecase.Service) {
-	h := &AuthHandler{service: s}
+func NewAuthHandler(r chi.Router, s *authusecase.Service, u *userusecase.Service) {
+	h := &AuthHandler{service: s, users: u}
 	r.Route("/auth", func(r chi.Router) {
 		r.Post("/signup", h.signUp)
 		r.Post("/login", h.login)
 		r.Post("/refresh", h.refresh)
 		r.Post("/password-reset/request", h.requestReset)
 		r.Post("/password-reset/confirm", h.confirmReset)
+		r.Get("/whoami", h.whoAmI)
 	})
 }
 
@@ -108,4 +111,13 @@ func (h *AuthHandler) confirmReset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
+}
+
+func (h *AuthHandler) whoAmI(w http.ResponseWriter, r *http.Request) {
+	u, err := h.users.IsLoggedIn(r)
+	if err != nil || u == nil {
+		respondWithError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+	respondWithJSON(w, http.StatusOK, u)
 }
