@@ -20,6 +20,8 @@ func main() {
 	c := di.NewContainer()
 
 	r := delivery.NewRouter()
+	r.Use(middleware.Logger)
+
 	delivery.NewPostHandler(r, c.PostService)
 	delivery.NewHelloHandler(r)
 
