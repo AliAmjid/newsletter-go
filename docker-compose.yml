@@ -22,6 +22,6 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./docs/openapi.yaml:/usr/share/nginx/html/openapi.yaml:ro
+      - ./docs/openapi.yaml:/openapi.yaml:ro
     environment:
-      SWAGGER_JSON: /usr/share/nginx/html/openapi.yaml
+      SWAGGER_JSON: /openapi.yaml
