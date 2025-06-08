@@ -49,3 +49,7 @@ internal/
   usecase/      // business services
 ```
 
+## Database migrations
+DB migration files are stored in `db/migrations` folder. To apply migrations call following command:
+
+goose postgres "postgres://postgres:mysecretpassword@localhost:5432/postgres?sslmode=disable" up
