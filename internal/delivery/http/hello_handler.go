@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	usersvc "github.com/AliAmjid/newsletter-go/internal/usecase/user"
+	usersvc "newsletter-go/internal/usecase/user"
 )
 
 type HelloHandler struct {

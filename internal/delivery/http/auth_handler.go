@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	authusecase "github.com/AliAmjid/newsletter-go/internal/usecase/auth"
+	authusecase "newsletter-go/internal/usecase/auth"
 )
 
 type AuthHandler struct {

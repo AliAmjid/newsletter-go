@@ -6,8 +6,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/AliAmjid/newsletter-go/domain"
-	postusecase "github.com/AliAmjid/newsletter-go/internal/usecase/post"
+	"newsletter-go/domain"
+	postusecase "newsletter-go/internal/usecase/post"
 )
 
 type PostHandler struct {

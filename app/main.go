@@ -7,8 +7,8 @@ import (
 
 	"github.com/joho/godotenv"
 
-	delivery "github.com/AliAmjid/newsletter-go/internal/delivery/http"
-	"github.com/AliAmjid/newsletter-go/internal/di"
+	delivery "newsletter-go/internal/delivery/http"
+	"newsletter-go/internal/di"
 )
 
 func main() {

@@ -5,23 +5,34 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/golang-jwt/jwt/v5"
+	"context"
+	firebase "firebase.google.com/go/v4"
+	"firebase.google.com/go/v4/auth"
 	"github.com/permitio/permit-golang/pkg/config"
 	"github.com/permitio/permit-golang/pkg/enforcement"
 	permitpkg "github.com/permitio/permit-golang/pkg/permit"
+	"google.golang.org/api/option"
 
-	"github.com/AliAmjid/newsletter-go/domain"
+	"newsletter-go/domain"
 )
 
 type Service struct {
-	repo   domain.UserRepository
-	permit *permitpkg.Client
-	jwtKey []byte
+	repo       domain.UserRepository
+	permit     *permitpkg.Client
+	authClient *auth.Client
 }
 
-func NewService(r domain.UserRepository, apiKey string, jwtKey []byte) *Service {
+func NewService(r domain.UserRepository, apiKey, creds string) *Service {
 	cfg := config.NewConfigBuilder(apiKey).WithPdpUrl("https://cloudpdp.api.permit.io").Build()
-	return &Service{repo: r, permit: permitpkg.NewPermit(cfg), jwtKey: jwtKey}
+	app, err := firebase.NewApp(context.Background(), nil, option.WithCredentialsFile(creds))
+	if err != nil {
+		panic(err)
+	}
+	ac, err := app.Auth(context.Background())
+	if err != nil {
+		panic(err)
+	}
+	return &Service{repo: r, permit: permitpkg.NewPermit(cfg), authClient: ac}
 }
 
 func (s *Service) tokenFromRequest(r *http.Request) (string, error) {
@@ -36,15 +47,12 @@ func (s *Service) tokenFromRequest(r *http.Request) (string, error) {
 	return parts[1], nil
 }
 
-func (s *Service) parseToken(tokenStr string) (string, error) {
-	claims := &jwt.RegisteredClaims{}
-	t, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
-		return s.jwtKey, nil
-	})
-	if err != nil || !t.Valid {
-		return "", errors.New("invalid token")
+func (s *Service) parseToken(ctx context.Context, tokenStr string) (string, error) {
+	t, err := s.authClient.VerifyIDToken(ctx, tokenStr)
+	if err != nil {
+		return "", err
 	}
-	return claims.Subject, nil
+	return t.UID, nil
 }
 
 func (s *Service) IsLoggedIn(r *http.Request) (*domain.User, error) {
@@ -52,7 +60,7 @@ func (s *Service) IsLoggedIn(r *http.Request) (*domain.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	userID, err := s.parseToken(token)
+	userID, err := s.parseToken(r.Context(), token)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +72,7 @@ func (s *Service) IsAllowedTo(r *http.Request, action, resource string) (bool, e
 	if err != nil {
 		return false, err
 	}
-	userID, err := s.parseToken(token)
+	userID, err := s.parseToken(r.Context(), token)
 	if err != nil {
 		return false, err
 	}
