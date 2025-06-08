@@ -26,12 +26,12 @@ func NewPostHandler(r chi.Router, s *postusecase.Service) {
 func (h *PostHandler) createPost(w http.ResponseWriter, r *http.Request) {
 	var p domain.Post
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
 
 	if err := h.service.Save(r.Context(), &p); err != nil {
-		http.Error(w, "Failed to save post", http.StatusInternalServerError)
+		respondWithError(w, http.StatusInternalServerError, "Failed to save post")
 		return
 	}
 

@@ -26,32 +26,32 @@ func NewService(r domain.UserRepository, apiKey string, jwtKey []byte) *Service 
 	return &Service{repo: r, permit: permitpkg.NewPermit(cfg), jwtKey: jwtKey}
 }
 
-func (s *Service) SignUp(ctx context.Context, email, password string) (string, error) {
+func (s *Service) SignUp(ctx context.Context, email, password string) (string, string, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	u := &domain.User{Email: email, PasswordHash: string(hash)}
 	if err := s.repo.Create(ctx, u); err != nil {
-		return "", err
+		return "", "", err
 	}
 	newUser := models.NewUserCreate(u.ID)
 	newUser.Email = &u.Email
 	if _, err := s.permit.SyncUser(ctx, *newUser); err != nil {
-		return "", err
+		return "", "", err
 	}
-	return s.issueJWT(u.ID)
+	return s.issueAccessToken(u.ID), s.issueRefreshToken(u.ID), nil
 }
 
-func (s *Service) Login(ctx context.Context, email, password string) (string, error) {
+func (s *Service) Login(ctx context.Context, email, password string) (string, string, error) {
 	u, err := s.repo.GetByEmail(ctx, email)
 	if err != nil || u == nil {
-		return "", err
+		return "", "", err
 	}
 	if bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(password)) != nil {
-		return "", errors.New("invalid credentials")
+		return "", "", errors.New("invalid credentials")
 	}
-	return s.issueJWT(u.ID)
+	return s.issueAccessToken(u.ID), s.issueRefreshToken(u.ID), nil
 }
 
 func (s *Service) RequestPasswordReset(ctx context.Context, email string) error {
@@ -65,11 +65,41 @@ func (s *Service) ConfirmPasswordReset(ctx context.Context, token, newPassword s
 	return nil
 }
 
-func (s *Service) issueJWT(userID string) (string, error) {
+func (s *Service) issueAccessToken(userID string) string {
 	claims := jwt.RegisteredClaims{
 		Subject:   userID,
-		ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(15 * time.Minute)),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(s.jwtKey)
+	str, _ := token.SignedString(s.jwtKey)
+	return str
+}
+
+func (s *Service) issueRefreshToken(userID string) string {
+	claims := jwt.RegisteredClaims{
+		Subject:   userID,
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * 24 * time.Hour)),
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	str, _ := token.SignedString(s.jwtKey)
+	return str
+}
+
+func (s *Service) parseToken(tokenStr string) (string, error) {
+	claims := &jwt.RegisteredClaims{}
+	t, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
+		return s.jwtKey, nil
+	})
+	if err != nil || !t.Valid {
+		return "", errors.New("invalid token")
+	}
+	return claims.Subject, nil
+}
+
+func (s *Service) Refresh(ctx context.Context, refreshToken string) (string, error) {
+	userID, err := s.parseToken(refreshToken)
+	if err != nil {
+		return "", err
+	}
+	return s.issueAccessToken(userID), nil
 }

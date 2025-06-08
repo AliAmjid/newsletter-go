@@ -37,6 +37,21 @@ func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*domain.
 	return &u, nil
 }
 
+func (r *UserRepository) GetByID(ctx context.Context, id string) (*domain.User, error) {
+	var u domain.User
+	err := r.DB.QueryRowContext(ctx,
+		`SELECT id, email, password_hash FROM "user" WHERE id = $1`,
+		id,
+	).Scan(&u.ID, &u.Email, &u.PasswordHash)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &u, nil
+}
+
 func (r *UserRepository) UpdatePassword(ctx context.Context, id string, hash string) error {
 	_, err := r.DB.ExecContext(ctx,
 		`UPDATE "user" SET password_hash = $1 WHERE id = $2`,

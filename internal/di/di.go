@@ -7,12 +7,14 @@ import (
 	"github.com/AliAmjid/newsletter-go/internal/repository/postgres"
 	authusecase "github.com/AliAmjid/newsletter-go/internal/usecase/auth"
 	postusecase "github.com/AliAmjid/newsletter-go/internal/usecase/post"
+	userusecase "github.com/AliAmjid/newsletter-go/internal/usecase/user"
 )
 
 // Container holds dependencies for the application.
 type Container struct {
 	PostService *postusecase.Service
 	AuthService *authusecase.Service
+	UserService *userusecase.Service
 }
 
 // NewContainer initializes the application dependencies.
@@ -25,10 +27,13 @@ func NewContainer() *Container {
 
 	userRepo := postgres.NewUserRepository(db.DB)
 	authApiKey := os.Getenv("PERMIT_API_KEY")
-	authService := authusecase.NewService(userRepo, authApiKey, []byte("secret"))
+	secret := os.Getenv("JWT_SECRET")
+	authService := authusecase.NewService(userRepo, authApiKey, []byte(secret))
+	userService := userusecase.NewService(userRepo, authApiKey, []byte(secret))
 
 	return &Container{
 		PostService: service,
 		AuthService: authService,
+		UserService: userService,
 	}
 }
