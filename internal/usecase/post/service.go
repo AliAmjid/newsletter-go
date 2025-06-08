@@ -20,3 +20,8 @@ func NewService(r domain.PostRepository) *Service {
 func (s *Service) Save(ctx context.Context, p *domain.Post) error {
 	return s.repo.Store(ctx, p)
 }
+
+// List returns posts of a newsletter.
+func (s *Service) List(ctx context.Context, newsletterID string) ([]domain.Post, error) {
+	return s.repo.ListByNewsletterID(ctx, newsletterID)
+}

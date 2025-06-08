@@ -11,4 +11,5 @@ type Post struct {
 // PostRepository defines the persistence functions for posts.
 type PostRepository interface {
 	Store(ctx context.Context, p *Post) error
+	ListByNewsletterID(ctx context.Context, newsletterID string) ([]Post, error)
 }
