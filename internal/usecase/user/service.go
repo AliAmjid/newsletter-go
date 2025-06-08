@@ -36,15 +36,17 @@ func NewService(r domain.UserRepository, apiKey, creds string) *Service {
 }
 
 func (s *Service) tokenFromRequest(r *http.Request) (string, error) {
-	h := r.Header.Get("Authentication")
-	if h == "" {
-		return "", errors.New("missing auth header")
+	auth := r.Header.Get("Authorization")
+	if auth == "" {
+		return "", errors.New("missing authorization header")
 	}
-	parts := strings.SplitN(h, " ", 2)
-	if len(parts) != 2 {
-		return "", errors.New("invalid auth header")
+
+	token := strings.TrimSpace(strings.TrimPrefix(auth, "Bearer"))
+	if token == "" {
+		return "", errors.New("empty token")
 	}
-	return parts[1], nil
+
+	return token, nil
 }
 
 func (s *Service) parseToken(ctx context.Context, tokenStr string) (string, error) {
@@ -64,7 +66,7 @@ func (s *Service) IsLoggedIn(r *http.Request) (*domain.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	return s.repo.GetByID(r.Context(), userID)
+	return s.repo.GetByFirebaseID(r.Context(), userID)
 }
 
 func (s *Service) IsAllowedTo(r *http.Request, action, resource string) (bool, error) {

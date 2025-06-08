@@ -7,20 +7,32 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
+
+	firebase "firebase.google.com/go/v4"
+	fbauth "firebase.google.com/go/v4/auth"
+	"google.golang.org/api/option"
 
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/google/uuid"
 	"github.com/permitio/permit-golang/pkg/config"
 	"github.com/permitio/permit-golang/pkg/models"
 	permitpkg "github.com/permitio/permit-golang/pkg/permit"
+	"github.com/sendgrid/sendgrid-go"
+	"github.com/sendgrid/sendgrid-go/helpers/mail"
 
 	"newsletter-go/domain"
 )
 
 type Service struct {
-	repo        domain.UserRepository
-	permit      *permitpkg.Client
-	firebaseKey string
+	repo         domain.UserRepository
+	resetRepo    domain.PasswordResetRepository
+	permit       *permitpkg.Client
+	firebaseKey  string
+	authClient   *fbauth.Client
+	sendgridKey  string
+	sendgridFrom string
 }
 
 type signUpResponse struct {
@@ -29,9 +41,17 @@ type signUpResponse struct {
 	LocalID      string `json:"localId"`
 }
 
-func NewService(r domain.UserRepository, permitKey, _ string, firebaseKey string) *Service {
+func NewService(r domain.UserRepository, rr domain.PasswordResetRepository, permitKey, creds string, firebaseKey string, sgKey, sgFrom string) *Service {
 	cfg := config.NewConfigBuilder(permitKey).WithPdpUrl("https://cloudpdp.api.permit.io").Build()
-	return &Service{repo: r, permit: permitpkg.NewPermit(cfg), firebaseKey: firebaseKey}
+	app, err := firebase.NewApp(context.Background(), nil, option.WithCredentialsFile(creds))
+	if err != nil {
+		panic(err)
+	}
+	ac, err := app.Auth(context.Background())
+	if err != nil {
+		panic(err)
+	}
+	return &Service{repo: r, resetRepo: rr, permit: permitpkg.NewPermit(cfg), firebaseKey: firebaseKey, authClient: ac, sendgridKey: sgKey, sendgridFrom: sgFrom}
 }
 
 func (s *Service) firebaseSignUp(ctx context.Context, email, password string) (*signUpResponse, error) {
@@ -80,7 +100,7 @@ func (s *Service) SignUp(ctx context.Context, email, password string) (string, s
 		return "", "", err
 	}
 	hash, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	u := &domain.User{ID: res.LocalID, Email: email, PasswordHash: string(hash)}
+	u := &domain.User{Email: email, PasswordHash: string(hash), FirebaseUID: res.LocalID}
 	if err := s.repo.Create(ctx, u); err != nil {
 		return "", "", err
 	}
@@ -101,10 +121,45 @@ func (s *Service) Login(ctx context.Context, email, password string) (string, st
 }
 
 func (s *Service) RequestPasswordReset(ctx context.Context, email string) error {
-	return nil
+	u, err := s.repo.GetByEmail(ctx, email)
+	if err != nil || u == nil {
+		return fmt.Errorf("user not found")
+	}
+
+	token := uuid.New().String()
+	expires := time.Now().Add(time.Hour).Unix()
+	if err := s.resetRepo.Create(ctx, &domain.PasswordResetToken{Token: token, UserID: u.ID, ExpiresAt: expires}); err != nil {
+		return err
+	}
+
+	from := mail.NewEmail("", s.sendgridFrom)
+	to := mail.NewEmail("", u.Email)
+	content := mail.NewContent("text/plain", fmt.Sprintf("Your password reset token is %s", token))
+	m := mail.NewV3MailInit(from, "Password Reset", to, content)
+	_, err = sendgrid.NewSendClient(s.sendgridKey).Send(m)
+	return err
 }
 
 func (s *Service) ConfirmPasswordReset(ctx context.Context, token, newPassword string) error {
+	rt, err := s.resetRepo.Get(ctx, token)
+	if err != nil || rt == nil {
+		return fmt.Errorf("invalid token")
+	}
+	if time.Now().Unix() > rt.ExpiresAt {
+		return fmt.Errorf("token expired")
+	}
+
+	hash, _ := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+
+	if err := s.repo.UpdatePassword(ctx, rt.UserID, string(hash)); err != nil {
+		return err
+	}
+	if _, err := s.authClient.UpdateUser(ctx, rt.UserID, (&fbauth.UserToUpdate{}).Password(newPassword)); err != nil {
+		return err
+	}
+	if err := s.resetRepo.Delete(ctx, token); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -129,19 +184,34 @@ func (s *Service) Refresh(ctx context.Context, refreshToken string) (string, err
 	return resp.IDToken, nil
 }
 
+type firebaseError struct {
+	Error struct {
+		Message string `json:"message"`
+		Status  string `json:"status"`
+	} `json:"error"`
+}
+
 func doJSON(req *http.Request, out interface{}) error {
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
+
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Response body: %s\n", string(bodyBytes))
+
+	fmt.Printf("Response body: %s,%s\n", string(req.RemoteAddr), string(bodyBytes))
+
 	if resp.StatusCode >= 300 {
-		return fmt.Errorf("firebase error: %s", resp.Status)
+		var fbErr firebaseError
+		if err := json.Unmarshal(bodyBytes, &fbErr); err != nil {
+			return fmt.Errorf("firebase error: %s", resp.Status)
+		}
+		return fmt.Errorf("firebase error: %s", fbErr.Error.Message)
 	}
+
 	return json.Unmarshal(bodyBytes, out)
 }

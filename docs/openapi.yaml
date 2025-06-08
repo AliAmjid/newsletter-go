@@ -23,9 +23,9 @@ components:
   securitySchemes:
     bearerAuth:
       type: apiKey
-      name: Authentication
+      name: Authorization
       in: header
-      description: 'Bearer access token sent as `Authentication: Bearer <token>`'
+      description: 'Bearer access token sent as `Authorization: Bearer <token>`'
   schemas:
     # Auth namespace
     AuthRequest:

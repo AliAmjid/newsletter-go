@@ -24,7 +24,7 @@ func main() {
 
 	delivery.NewPostHandler(r, c.PostService)
 	delivery.NewHelloHandler(r, c.UserService)
-	delivery.NewAuthHandler(r, c.AuthService)
+	delivery.NewAuthHandler(r, c.AuthService, c.UserService)
 
 	fmt.Println("Server starting on port 3000")
 	server := &http.Server{
