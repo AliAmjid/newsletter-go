@@ -80,7 +80,7 @@ func (s *Service) SignUp(ctx context.Context, email, password string) (string, s
 		return "", "", err
 	}
 	hash, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	u := &domain.User{ID: res.LocalID, Email: email, PasswordHash: string(hash)}
+	u := &domain.User{Email: email, PasswordHash: string(hash), FirebaseUID: res.LocalID}
 	if err := s.repo.Create(ctx, u); err != nil {
 		return "", "", err
 	}

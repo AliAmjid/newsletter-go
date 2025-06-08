@@ -66,7 +66,7 @@ func (s *Service) IsLoggedIn(r *http.Request) (*domain.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	return s.repo.GetByID(r.Context(), userID)
+	return s.repo.GetByFirebaseID(r.Context(), userID)
 }
 
 func (s *Service) IsAllowedTo(r *http.Request, action, resource string) (bool, error) {
