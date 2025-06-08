@@ -22,7 +22,7 @@ type Service struct {
 }
 
 func NewService(r domain.UserRepository, apiKey string, jwtKey []byte) *Service {
-	cfg := config.NewConfigBuilder(apiKey).Build()
+	cfg := config.NewConfigBuilder(apiKey).WithPdpUrl("https://cloudpdp.api.permit.io").Build()
 	return &Service{repo: r, permit: permitpkg.NewPermit(cfg), jwtKey: jwtKey}
 }
 
