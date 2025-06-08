@@ -3,7 +3,7 @@ package post
 import (
 	"context"
 
-	"github.com/AliAmjid/newsletter-go/domain"
+	"newsletter-go/domain"
 )
 
 // Service handles post business logic.

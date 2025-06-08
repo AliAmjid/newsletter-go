@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/AliAmjid/newsletter-go/domain"
+	"newsletter-go/domain"
 )
 
 type PostRepository struct {

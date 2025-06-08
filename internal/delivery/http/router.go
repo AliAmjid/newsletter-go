@@ -1,7 +1,11 @@
 package http
 
-import "github.com/go-chi/chi/v5"
+import (
+	"github.com/go-chi/chi/v5"
+)
 
 func NewRouter() *chi.Mux {
-	return chi.NewRouter()
+	r := chi.NewRouter()
+	r.Use(corsMiddleware)
+	return r
 }

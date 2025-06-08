@@ -49,6 +49,15 @@ internal/
   usecase/      // business services
 ```
 
+### Environment Variables
+
+```
+POSTGRES_CONNECTION_STRING=<db-url>
+PERMIT_API_KEY=<permit-key>
+FIREBASE_CREDENTIALS=<path-to-service-account>
+FIREBASE_API_KEY=<web-api-key>
+```
+
 ## Database migrations
 DB migration files are stored in `db/migrations` folder. To apply migrations call following command:
 

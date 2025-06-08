@@ -7,8 +7,8 @@ import (
 
 	"github.com/joho/godotenv"
 
-	delivery "github.com/AliAmjid/newsletter-go/internal/delivery/http"
-	"github.com/AliAmjid/newsletter-go/internal/di"
+	delivery "newsletter-go/internal/delivery/http"
+	"newsletter-go/internal/di"
 )
 
 func main() {
@@ -23,7 +23,8 @@ func main() {
 	r.Use(middleware.Logger)
 
 	delivery.NewPostHandler(r, c.PostService)
-	delivery.NewHelloHandler(r)
+	delivery.NewHelloHandler(r, c.UserService)
+	delivery.NewAuthHandler(r, c.AuthService)
 
 	fmt.Println("Server starting on port 3000")
 	server := &http.Server{
