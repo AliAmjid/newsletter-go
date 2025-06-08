@@ -35,3 +35,17 @@ This service keeps full control of your data and security checks, while offloadi
 ### Diagram
 
 ![img.png](docs/img.png)
+## Project Structure
+
+The source code follows a simplified version of the [go-clean-arch](https://github.com/bxcodec/go-clean-arch) layout:
+
+```
+app/            // main program entry
+domain/         // business entities and repository interfaces
+internal/
+  db/           // database setup
+  delivery/http // HTTP handlers and router
+  repository/   // data access implementations
+  usecase/      // business services
+```
+
