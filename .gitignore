@@ -4,3 +4,6 @@
 
 # Config files
 .env
+
+# Air build output
+tmp/

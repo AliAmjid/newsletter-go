@@ -9,13 +9,24 @@ services:
     ports:
       - "5432:5432"
 
-  app:
-    build: .
+#  app-prod:
+#    build: .
+#    env_file: .env
+#   depends_on:
+#      - db
+#    ports:
+#      - "3000:3000"
+
+  app-dev:
+    image: cosmtrek/air
+    working_dir: /app
     env_file: .env
     depends_on:
       - db
     ports:
       - "3000:3000"
+    volumes:
+      - ./:/app
 
   swagger:
     image: swaggerapi/swagger-ui
