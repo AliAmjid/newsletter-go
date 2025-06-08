@@ -119,5 +119,5 @@ func (h *AuthHandler) whoAmI(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusUnauthorized, err.Error())
 		return
 	}
-	respondWithJSON(w, http.StatusOK, u)
+	respondWithJSON(w, http.StatusOK, map[string]string{"id": u.ID, "email": u.Email})
 }

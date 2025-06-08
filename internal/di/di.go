@@ -25,10 +25,13 @@ func NewContainer() *Container {
 	service := postusecase.NewService(repo)
 
 	userRepo := postgres.NewUserRepository(db.DB)
+	resetRepo := postgres.NewPasswordResetRepository(db.DB)
 	authApiKey := os.Getenv("PERMIT_API_KEY")
 	fbCreds := os.Getenv("FIREBASE_CREDENTIALS")
 	fbKey := os.Getenv("FIREBASE_API_KEY")
-	authService := authusecase.NewService(userRepo, authApiKey, fbCreds, fbKey)
+	sgKey := os.Getenv("SENDGRID_API_KEY")
+	sgFrom := os.Getenv("SENDGRID_FROM_EMAIL")
+	authService := authusecase.NewService(userRepo, resetRepo, authApiKey, fbCreds, fbKey, sgKey, sgFrom)
 	userService := userusecase.NewService(userRepo, authApiKey, fbCreds)
 
 	return &Container{

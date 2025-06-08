@@ -7,20 +7,32 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
+
+	firebase "firebase.google.com/go/v4"
+	fbauth "firebase.google.com/go/v4/auth"
+	"google.golang.org/api/option"
 
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/google/uuid"
 	"github.com/permitio/permit-golang/pkg/config"
 	"github.com/permitio/permit-golang/pkg/models"
 	permitpkg "github.com/permitio/permit-golang/pkg/permit"
+	"github.com/sendgrid/sendgrid-go"
+	"github.com/sendgrid/sendgrid-go/helpers/mail"
 
 	"newsletter-go/domain"
 )
 
 type Service struct {
-	repo        domain.UserRepository
-	permit      *permitpkg.Client
-	firebaseKey string
+	repo         domain.UserRepository
+	resetRepo    domain.PasswordResetRepository
+	permit       *permitpkg.Client
+	firebaseKey  string
+	authClient   *fbauth.Client
+	sendgridKey  string
+	sendgridFrom string
 }
 
 type signUpResponse struct {
@@ -29,9 +41,17 @@ type signUpResponse struct {
 	LocalID      string `json:"localId"`
 }
 
-func NewService(r domain.UserRepository, permitKey, _ string, firebaseKey string) *Service {
+func NewService(r domain.UserRepository, rr domain.PasswordResetRepository, permitKey, creds string, firebaseKey string, sgKey, sgFrom string) *Service {
 	cfg := config.NewConfigBuilder(permitKey).WithPdpUrl("https://cloudpdp.api.permit.io").Build()
-	return &Service{repo: r, permit: permitpkg.NewPermit(cfg), firebaseKey: firebaseKey}
+	app, err := firebase.NewApp(context.Background(), nil, option.WithCredentialsFile(creds))
+	if err != nil {
+		panic(err)
+	}
+	ac, err := app.Auth(context.Background())
+	if err != nil {
+		panic(err)
+	}
+	return &Service{repo: r, resetRepo: rr, permit: permitpkg.NewPermit(cfg), firebaseKey: firebaseKey, authClient: ac, sendgridKey: sgKey, sendgridFrom: sgFrom}
 }
 
 func (s *Service) firebaseSignUp(ctx context.Context, email, password string) (*signUpResponse, error) {
@@ -101,10 +121,45 @@ func (s *Service) Login(ctx context.Context, email, password string) (string, st
 }
 
 func (s *Service) RequestPasswordReset(ctx context.Context, email string) error {
-	return nil
+	u, err := s.repo.GetByEmail(ctx, email)
+	if err != nil || u == nil {
+		return fmt.Errorf("user not found")
+	}
+
+	token := uuid.New().String()
+	expires := time.Now().Add(time.Hour).Unix()
+	if err := s.resetRepo.Create(ctx, &domain.PasswordResetToken{Token: token, UserID: u.ID, ExpiresAt: expires}); err != nil {
+		return err
+	}
+
+	from := mail.NewEmail("", s.sendgridFrom)
+	to := mail.NewEmail("", u.Email)
+	content := mail.NewContent("text/plain", fmt.Sprintf("Your password reset token is %s", token))
+	m := mail.NewV3MailInit(from, "Password Reset", to, content)
+	_, err = sendgrid.NewSendClient(s.sendgridKey).Send(m)
+	return err
 }
 
 func (s *Service) ConfirmPasswordReset(ctx context.Context, token, newPassword string) error {
+	rt, err := s.resetRepo.Get(ctx, token)
+	if err != nil || rt == nil {
+		return fmt.Errorf("invalid token")
+	}
+	if time.Now().Unix() > rt.ExpiresAt {
+		return fmt.Errorf("token expired")
+	}
+
+	hash, _ := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+
+	if err := s.repo.UpdatePassword(ctx, rt.UserID, string(hash)); err != nil {
+		return err
+	}
+	if _, err := s.authClient.UpdateUser(ctx, rt.UserID, (&fbauth.UserToUpdate{}).Password(newPassword)); err != nil {
+		return err
+	}
+	if err := s.resetRepo.Delete(ctx, token); err != nil {
+		return err
+	}
 	return nil
 }
 
