@@ -14,7 +14,6 @@ type PostHandler struct {
 	service *postusecase.Service
 }
 
-// NewPostHandler registers post endpoints to the router.
 func NewPostHandler(r chi.Router, s *postusecase.Service) {
 	h := &PostHandler{service: s}
 

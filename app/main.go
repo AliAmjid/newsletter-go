@@ -4,14 +4,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/joho/godotenv"
 
-	"github.com/AliAmjid/newsletter-go/internal/db"
 	delivery "github.com/AliAmjid/newsletter-go/internal/delivery/http"
-	"github.com/AliAmjid/newsletter-go/internal/repository/postgres"
-	postusecase "github.com/AliAmjid/newsletter-go/internal/usecase/post"
+	"github.com/AliAmjid/newsletter-go/internal/di"
 )
 
 func main() {
@@ -20,14 +17,10 @@ func main() {
 		log.Fatal("An error has occured during loading from .env file")
 	}
 
-	dbConnectionString := os.Getenv("POSTGRES_CONNECTION_STRING")
-	db.Init(dbConnectionString)
-
-	repo := postgres.NewPostRepository(db.DB)
-	service := postusecase.NewService(repo)
+	c := di.NewContainer()
 
 	r := delivery.NewRouter()
-	delivery.NewPostHandler(r, service)
+	delivery.NewPostHandler(r, c.PostService)
 
 	fmt.Println("Server starting on port 3000")
 	server := &http.Server{
