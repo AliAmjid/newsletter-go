@@ -13,8 +13,6 @@ import (
 	fbauth "firebase.google.com/go/v4/auth"
 	"google.golang.org/api/option"
 
-	"golang.org/x/crypto/bcrypt"
-
 	"github.com/google/uuid"
 	"github.com/permitio/permit-golang/pkg/config"
 	"github.com/permitio/permit-golang/pkg/models"
@@ -99,8 +97,7 @@ func (s *Service) SignUp(ctx context.Context, email, password string) (string, s
 	if err != nil {
 		return "", "", err
 	}
-	hash, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	u := &domain.User{Email: email, PasswordHash: string(hash), FirebaseUID: res.LocalID}
+	u := &domain.User{Email: email, FirebaseUID: res.LocalID}
 	if err := s.repo.Create(ctx, u); err != nil {
 		return "", "", err
 	}
@@ -149,11 +146,6 @@ func (s *Service) ConfirmPasswordReset(ctx context.Context, token, newPassword s
 		return fmt.Errorf("token expired")
 	}
 
-	hash, _ := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
-
-	if err := s.repo.UpdatePassword(ctx, rt.UserID, string(hash)); err != nil {
-		return err
-	}
 	if _, err := s.authClient.UpdateUser(ctx, rt.UserID, (&fbauth.UserToUpdate{}).Password(newPassword)); err != nil {
 		return err
 	}
