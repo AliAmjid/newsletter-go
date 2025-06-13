@@ -4,8 +4,9 @@ import (
 	"os"
 
 	"newsletter-go/internal/db"
-	"newsletter-go/internal/repository/postgres"
-	authusecase "newsletter-go/internal/usecase/auth"
+       "newsletter-go/internal/repository/postgres"
+       authusecase "newsletter-go/internal/usecase/auth"
+       "newsletter-go/internal/mailer"
 	postusecase "newsletter-go/internal/usecase/post"
 	userusecase "newsletter-go/internal/usecase/user"
 )
@@ -29,10 +30,15 @@ func NewContainer() *Container {
 	authApiKey := os.Getenv("PERMIT_API_KEY")
 	fbCreds := os.Getenv("FIREBASE_CREDENTIALS")
 	fbKey := os.Getenv("FIREBASE_API_KEY")
-	sgKey := os.Getenv("SENDGRID_API_KEY")
-	sgFrom := os.Getenv("SENDGRID_FROM_EMAIL")
-	authService := authusecase.NewService(userRepo, resetRepo, authApiKey, fbCreds, fbKey, sgKey, sgFrom)
-	userService := userusecase.NewService(userRepo, authApiKey, fbCreds)
+       mgDomain := os.Getenv("MAILGUN_DOMAIN")
+       mgKey := os.Getenv("MAILGUN_API_KEY")
+       mgFrom := os.Getenv("MAILGUN_FROM_EMAIL")
+       mailerSvc, err := mailer.NewService(mgDomain, mgKey, mgFrom)
+       if err != nil {
+               panic(err)
+       }
+       authService := authusecase.NewService(userRepo, resetRepo, authApiKey, fbCreds, fbKey, mailerSvc)
+       userService := userusecase.NewService(userRepo, authApiKey, fbCreds)
 
 	return &Container{
 		PostService: service,

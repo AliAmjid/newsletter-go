@@ -16,9 +16,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/permitio/permit-golang/pkg/config"
 	"github.com/permitio/permit-golang/pkg/models"
-	permitpkg "github.com/permitio/permit-golang/pkg/permit"
-	"github.com/sendgrid/sendgrid-go"
-	"github.com/sendgrid/sendgrid-go/helpers/mail"
+    permitpkg "github.com/permitio/permit-golang/pkg/permit"
+    "newsletter-go/internal/mailer"
 
 	"newsletter-go/domain"
 )
@@ -29,8 +28,7 @@ type Service struct {
 	permit       *permitpkg.Client
 	firebaseKey  string
 	authClient   *fbauth.Client
-	sendgridKey  string
-	sendgridFrom string
+    mailer       *mailer.Service
 }
 
 type signUpResponse struct {
@@ -39,7 +37,7 @@ type signUpResponse struct {
 	LocalID      string `json:"localId"`
 }
 
-func NewService(r domain.UserRepository, rr domain.PasswordResetRepository, permitKey, creds string, firebaseKey string, sgKey, sgFrom string) *Service {
+func NewService(r domain.UserRepository, rr domain.PasswordResetRepository, permitKey, creds string, firebaseKey string, m *mailer.Service) *Service {
 	cfg := config.NewConfigBuilder(permitKey).WithPdpUrl("https://cloudpdp.api.permit.io").Build()
 	app, err := firebase.NewApp(context.Background(), nil, option.WithCredentialsFile(creds))
 	if err != nil {
@@ -49,7 +47,7 @@ func NewService(r domain.UserRepository, rr domain.PasswordResetRepository, perm
 	if err != nil {
 		panic(err)
 	}
-	return &Service{repo: r, resetRepo: rr, permit: permitpkg.NewPermit(cfg), firebaseKey: firebaseKey, authClient: ac, sendgridKey: sgKey, sendgridFrom: sgFrom}
+    return &Service{repo: r, resetRepo: rr, permit: permitpkg.NewPermit(cfg), firebaseKey: firebaseKey, authClient: ac, mailer: m}
 }
 
 func (s *Service) firebaseSignUp(ctx context.Context, email, password string) (*signUpResponse, error) {
@@ -129,12 +127,7 @@ func (s *Service) RequestPasswordReset(ctx context.Context, email string) error 
 		return err
 	}
 
-	from := mail.NewEmail("", s.sendgridFrom)
-	to := mail.NewEmail("", u.Email)
-	content := mail.NewContent("text/plain", fmt.Sprintf("Your password reset token is %s", token))
-	m := mail.NewV3MailInit(from, "Password Reset", to, content)
-	_, err = sendgrid.NewSendClient(s.sendgridKey).Send(m)
-	return err
+    return s.mailer.SendForgotPasswordEmail(u.Email, token)
 }
 
 func (s *Service) ConfirmPasswordReset(ctx context.Context, token, newPassword string) error {
