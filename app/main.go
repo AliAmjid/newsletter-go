@@ -26,6 +26,7 @@ func main() {
 	delivery.NewHelloHandler(r, c.UserService)
 	delivery.NewAuthHandler(r, c.AuthService, c.UserService)
 	delivery.NewNewsletterHandler(r, c.NewsletterService, c.UserService)
+	delivery.NewSubscriptionHandler(r, c.SubscriberService, c.NewsletterService, c.UserService)
 
 	delivery.NewSubscriberHandler(r, c.SubscriberService)
 

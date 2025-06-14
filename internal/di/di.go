@@ -32,6 +32,9 @@ func NewContainer() *Container {
 	newsletterRepo := postgres.NewNewsletterRepository(db.DB)
 	newsletterService := newsletterusecase.NewService(newsletterRepo)
 
+	subscriberRepo := postgres.NewSubscriberRepository(db.DB)
+	subscriberService := subscriberusecase.NewService(subscriberRepo)
+
 	userRepo := postgres.NewUserRepository(db.DB)
 	resetRepo := postgres.NewPasswordResetRepository(db.DB)
 	authApiKey := os.Getenv("PERMIT_API_KEY")
