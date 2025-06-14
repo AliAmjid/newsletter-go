@@ -1,0 +1,17 @@
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+
+  app-prod:
+    image: 590183723398.dkr.ecr.eu-central-1.amazonaws.com/newsletter-go:latest
+    depends_on:
+      - db
+    ports:
+      - "3000:3000"
+
