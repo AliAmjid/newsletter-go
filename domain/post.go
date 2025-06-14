@@ -13,4 +13,5 @@ type Post struct {
 type PostRepository interface {
 	Store(ctx context.Context, p *Post) error
 	Create(ctx context.Context, p *Post) error
+	ListPostsByNewsletter(ctx context.Context, newsletterId string) ([]*Post, error)
 }

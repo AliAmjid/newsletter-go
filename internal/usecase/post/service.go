@@ -28,3 +28,7 @@ func (s *Service) Save(ctx context.Context, p *domain.Post) error {
 func (s *Service) IsNewsletterOwner(ctx context.Context, newsletterId, userId string) (bool, error) {
 	return s.newsletterRepo.IsOwner(ctx, newsletterId, userId)
 }
+
+func (s *Service) ListPostsByNewsletter(ctx context.Context, newsletterId string) ([]*domain.Post, error) {
+	return s.repo.ListPostsByNewsletter(ctx, newsletterId)
+}

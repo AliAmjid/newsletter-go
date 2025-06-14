@@ -30,6 +30,7 @@ func NewPostHandler(r chi.Router, s *postusecase.Service, u *userusecase.Service
 	}
 
 	r.Route("/newsletters/{newsletterId}/posts", func(r chi.Router) {
+		r.Get("/", h.listPosts)
 		r.Post("/", h.createPost)
 	})
 }
@@ -74,5 +75,31 @@ func (h *PostHandler) createPost(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PostHandler) listPosts(w http.ResponseWriter, r *http.Request) {
-	// newsletterId := chi.URLParam(r, "newsletterId")
+
+	user, err := h.users.IsLoggedIn(r)
+	if err != nil || user == nil {
+		respondWithError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	// Check if the user is allowed to read a posts
+	if ok, err := h.users.IsAllowedTo(r, "read", "post"); err != nil || !ok {
+		respondWithError(w, http.StatusForbidden, "forbidden")
+		return
+	}
+
+	newsletterId := chi.URLParam(r, "newsletterId")
+	if newsletterId == "" {
+		respondWithError(w, http.StatusBadRequest, "newsletterId is required")
+		return
+	}
+
+	posts, err := h.service.ListPostsByNewsletter(r.Context(), newsletterId)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to list posts")
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, posts)
+
 }

@@ -29,3 +29,35 @@ func (p *PostRepository) Create(ctx context.Context, post *domain.Post) error {
 		post.NewsletterId, post.Title, post.Content,
 	).Scan(&post.ID, &post.PublishedAt)
 }
+
+func (p *PostRepository) ListPostsByNewsletter(ctx context.Context, newsletterId string) ([]*domain.Post, error) {
+	rows, err := p.DB.QueryContext(ctx,
+		"SELECT id, newsletter_id, title, content, published_at FROM post WHERE newsletter_id = $1",
+		newsletterId,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var posts []*domain.Post
+	for rows.Next() {
+		post := &domain.Post{}
+		if err := rows.Scan(&post.ID, &post.NewsletterId, &post.Title, &post.Content, &post.PublishedAt); err != nil {
+			return []*domain.Post{}, err
+		}
+		posts = append(posts, post)
+	}
+
+	// Check for any errors encountered during iteration
+	if err := rows.Err(); err != nil {
+		return []*domain.Post{}, err
+	}
+
+	// If no posts were found, return an empty slice
+	if posts == nil {
+		posts = []*domain.Post{}
+	}
+
+	return posts, nil
+}
