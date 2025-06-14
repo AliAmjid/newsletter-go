@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/base64"
+	"errors"
 	"net/http"
 	"strconv"
 	"time"
@@ -31,6 +32,11 @@ type postCreateRequest struct {
 	Title              string `json:"title" validate:"required"`
 	Content            string `json:"content"`
 	PublishImmediately bool   `json:"publishImmediately"`
+}
+
+type PaginatedPostResponse struct {
+	Posts      []*domain.Post `json:"posts"`
+	NextCursor string         `json:"nextCursor"`
 }
 
 func NewPostHandler(r chi.Router, s *postusecase.Service, u *userusecase.Service) {
@@ -82,8 +88,8 @@ func (h *PostHandler) createPost(w http.ResponseWriter, r *http.Request) {
 		PublishedAt:  publishedAt,
 	}
 	if err := h.service.Create(r.Context(), user.ID, p); err != nil {
-		if err == postusecase.ErrNotOwner {
-			respondWithError(w, http.StatusForbidden, "You are not the owner of this newsletter")
+		if errors.Is(err, postusecase.ErrNotOwner) {
+			respondWithError(w, http.StatusForbidden, err.Error())
 			return
 		}
 		respondWithError(w, http.StatusInternalServerError, "Failed to save post")
@@ -126,14 +132,14 @@ func (h *PostHandler) listPosts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, map[string]interface{}{
-		"posts":      posts,
-		"nextCursor": next,
-	})
+	result := PaginatedPostResponse{
+		Posts:      posts,
+		NextCursor: next,
+	}
+	respondWithJSON(w, http.StatusOK, result)
 }
 
 func (h *PostHandler) publishPost(w http.ResponseWriter, r *http.Request) {
-	newsletterId := chi.URLParam(r, "newsletterId")
 	postId := chi.URLParam(r, "postId")
 
 	user, err := h.users.IsLoggedIn(r)
@@ -149,16 +155,16 @@ func (h *PostHandler) publishPost(w http.ResponseWriter, r *http.Request) {
 
 	p, err := h.service.Publish(r.Context(), user.ID, postId)
 	if err != nil {
-		if err == postusecase.ErrNotOwner {
-			respondWithError(w, http.StatusForbidden, "You are not the owner of this newsletter")
+		if errors.Is(err, postusecase.ErrNotOwner) {
+			respondWithError(w, http.StatusForbidden, err.Error())
 			return
 		}
-		if err == postusecase.ErrAlreadyPublished {
-			respondWithError(w, http.StatusBadRequest, "Post already published")
+		if errors.Is(err, postusecase.ErrAlreadyPublished) {
+			respondWithError(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		if err == postusecase.ErrNotFound {
-			respondWithError(w, http.StatusNotFound, "not found")
+		if errors.Is(err, postusecase.ErrNotFound) {
+			respondWithError(w, http.StatusNotFound, err.Error())
 			return
 		}
 		respondWithError(w, http.StatusInternalServerError, "Failed to publish post")

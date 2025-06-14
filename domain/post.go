@@ -10,7 +10,7 @@ type Post struct {
 	NewsletterId string     `json:"newsletterId"`
 	Title        string     `json:"title"`
 	Content      string     `json:"content"`
-	PublishedAt  *time.Time `json:"publishedAt,omitempty"`
+	PublishedAt  *time.Time `json:"publishedAt"`
 }
 
 type PostRepository interface {
