@@ -7,7 +7,7 @@ include $(ENV_FILE)
 export
 
 # Define a variable for the folder route
-folder ?= .
+folder ?= terraform
 
 help:
 	@echo "Available commands:"
@@ -16,7 +16,7 @@ help:
 
 
 terraform-plan:
-	dotenvx run -fk .env.keys -f $(folder)/.env -- terraform -chdir=$(folder) plan
+	dotenvx run -fk .env.keys -f .env -- terraform -chdir=$(folder) plan
 
 terraform-apply:
-	dotenvx run -fk .env.keys -f $(folder)/.env -- terraform -chdir=$(folder) apply
+	dotenvx run -fk .env.keys -f .env -- terraform -chdir=$(folder) apply
