@@ -147,7 +147,6 @@ components:
         - newsletterId
         - title
         - content
-        - publishedAt
     PostCreate:
       type: object
       properties:
@@ -155,6 +154,8 @@ components:
           type: string
         content:
           type: string
+        publishImmediately:
+          type: boolean
       required:
         - title
         - content
@@ -443,15 +444,34 @@ paths:
           schema:
             type: string
             format: uuid
+        - in: query
+          name: cursor
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: return results after this timestamp
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+          description: max number of posts to return
       responses:
         "200":
-          description: Array of posts
+          description: Page of posts
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Post"
+                type: object
+                properties:
+                  posts:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Post"
+                  nextCursor:
+                    type: string
+                    format: date-time
     post:
       tags:
         - Posts
@@ -484,6 +504,33 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /newsletters/{newsletterId}/posts/{postId}/publish:
+    post:
+      tags:
+        - Posts
+      summary: Publish an existing post
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: newsletterId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: postId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Post published
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Post"
   /newsletters/{newsletterId}/subscribers:
     get:
       tags:

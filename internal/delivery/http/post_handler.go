@@ -2,6 +2,8 @@ package http
 
 import (
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
@@ -18,8 +20,9 @@ type PostHandler struct {
 }
 
 type postCreateRequest struct {
-	Title   string `json:"title" validate:"required"`
-	Content string `json:"content"`
+	Title              string `json:"title" validate:"required"`
+	Content            string `json:"content"`
+	PublishImmediately bool   `json:"publishImmediately"`
 }
 
 func NewPostHandler(r chi.Router, s *postusecase.Service, u *userusecase.Service) {
@@ -32,6 +35,7 @@ func NewPostHandler(r chi.Router, s *postusecase.Service, u *userusecase.Service
 	r.Route("/newsletters/{newsletterId}/posts", func(r chi.Router) {
 		r.Get("/", h.listPosts)
 		r.Post("/", h.createPost)
+		r.Post("/{postId}/publish", h.publishPost)
 	})
 }
 
@@ -49,22 +53,28 @@ func (h *PostHandler) createPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if isOwner, err := h.service.IsNewsletterOwner(r.Context(), newsletterId, user.ID); err != nil || !isOwner {
-		respondWithError(w, http.StatusForbidden, "You are not the owner of this newsletter")
-		return
-	}
-
 	var req postCreateRequest
 	if !bindAndValidate(w, r, &req, h.validate) {
 		return
+	}
+
+	var publishedAt *time.Time
+	if req.PublishImmediately {
+		t := time.Now()
+		publishedAt = &t
 	}
 
 	p := &domain.Post{
 		NewsletterId: newsletterId,
 		Title:        req.Title,
 		Content:      req.Content,
+		PublishedAt:  publishedAt,
 	}
-	if err := h.service.Save(r.Context(), p); err != nil {
+	if err := h.service.Create(r.Context(), user.ID, p); err != nil {
+		if err == postusecase.ErrNotOwner {
+			respondWithError(w, http.StatusForbidden, "You are not the owner of this newsletter")
+			return
+		}
 		respondWithError(w, http.StatusInternalServerError, "Failed to save post")
 		return
 	}
@@ -90,12 +100,58 @@ func (h *PostHandler) listPosts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	posts, err := h.service.ListPostsByNewsletter(r.Context(), newsletterId)
+	cursor := r.URL.Query().Get("cursor")
+	limitStr := r.URL.Query().Get("limit")
+	limit := 20
+	if limitStr != "" {
+		if v, err := strconv.Atoi(limitStr); err == nil && v > 0 {
+			limit = v
+		}
+	}
+
+	posts, next, err := h.service.List(r.Context(), newsletterId, cursor, limit)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to list posts")
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, posts)
+	respondWithJSON(w, http.StatusOK, map[string]interface{}{
+		"posts":      posts,
+		"nextCursor": next,
+	})
+}
 
+func (h *PostHandler) publishPost(w http.ResponseWriter, r *http.Request) {
+	newsletterId := chi.URLParam(r, "newsletterId")
+	postId := chi.URLParam(r, "postId")
+
+	user, err := h.users.IsLoggedIn(r)
+	if err != nil || user == nil {
+		respondWithError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	if ok, err := h.users.IsAllowedTo(r, "update", "post"); err != nil || !ok {
+		respondWithError(w, http.StatusForbidden, "forbidden")
+		return
+	}
+
+	p, err := h.service.Publish(r.Context(), user.ID, postId)
+	if err != nil {
+		if err == postusecase.ErrNotOwner {
+			respondWithError(w, http.StatusForbidden, "You are not the owner of this newsletter")
+			return
+		}
+		if err == postusecase.ErrAlreadyPublished {
+			respondWithError(w, http.StatusBadRequest, "Post already published")
+			return
+		}
+		if err == postusecase.ErrNotFound {
+			respondWithError(w, http.StatusNotFound, "not found")
+			return
+		}
+		respondWithError(w, http.StatusInternalServerError, "Failed to publish post")
+		return
+	}
+	respondWithJSON(w, http.StatusOK, p)
 }
