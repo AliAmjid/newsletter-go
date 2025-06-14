@@ -70,15 +70,11 @@ func (s *Service) IsLoggedIn(r *http.Request) (*domain.User, error) {
 }
 
 func (s *Service) IsAllowedTo(r *http.Request, action, resource string) (bool, error) {
-	token, err := s.tokenFromRequest(r)
+	user, err := s.IsLoggedIn(r)
 	if err != nil {
 		return false, err
 	}
-	userID, err := s.parseToken(r.Context(), token)
-	if err != nil {
-		return false, err
-	}
-	u := enforcement.UserBuilder(userID).Build()
+	u := enforcement.UserBuilder(user.ID).WithEmail(user.Email).Build()
 	res := enforcement.ResourceBuilder(resource).Build()
 	return s.permit.Check(u, enforcement.Action(action), res)
 }

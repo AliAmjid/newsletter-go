@@ -89,6 +89,7 @@ func (h *NewsletterHandler) getNewsletter(w http.ResponseWriter, r *http.Request
 		respondWithError(w, http.StatusUnauthorized, err.Error())
 		return
 	}
+
 	if ok, err := h.users.IsAllowedTo(r, "read", "newsletter"); err != nil || !ok {
 		respondWithError(w, http.StatusForbidden, "forbidden")
 		return
@@ -100,10 +101,12 @@ func (h *NewsletterHandler) getNewsletter(w http.ResponseWriter, r *http.Request
 		respondWithError(w, http.StatusNotFound, "not found")
 		return
 	}
+
 	if n.OwnerID != user.ID {
 		respondWithError(w, http.StatusForbidden, "forbidden")
 		return
 	}
+
 	respondWithJSON(w, http.StatusOK, n)
 }
 
