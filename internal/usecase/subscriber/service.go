@@ -16,6 +16,7 @@ type Service struct {
 }
 
 var ErrTooFrequent = errors.New("confirmation email sent recently")
+var ErrAlreadySubscribed = errors.New("already subscribed")
 
 func NewService(r domain.SubscriptionRepository, m *mailer.Service) *Service {
 	return &Service{repo: r, mailer: m}
@@ -25,6 +26,10 @@ func (s *Service) Subscribe(ctx context.Context, newsletterID, email string) (st
 	existing, err := s.repo.GetByNewsletterEmail(ctx, newsletterID, email)
 	if err != nil {
 		return "", err
+	}
+
+	if existing.ConfirmedAt != nil {
+		return "", ErrAlreadySubscribed
 	}
 
 	token := uuid.New().String()

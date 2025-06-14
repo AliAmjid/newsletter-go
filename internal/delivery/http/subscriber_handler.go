@@ -44,6 +44,11 @@ func (h *SubscriberHandler) subscribe(w http.ResponseWriter, r *http.Request) {
 			respondWithError(w, http.StatusTooManyRequests, err.Error())
 			return
 		}
+		if err == subscriberusecase.ErrAlreadySubscribed {
+			respondWithError(w, http.StatusConflict, err.Error())
+			return
+		}
+
 		respondWithError(w, http.StatusInternalServerError, "failed to subscribe")
 		return
 	}
