@@ -9,6 +9,7 @@ import (
 	authusecase "newsletter-go/internal/usecase/auth"
 	newsletterusecase "newsletter-go/internal/usecase/newsletter"
 	postusecase "newsletter-go/internal/usecase/post"
+	subscriberusecase "newsletter-go/internal/usecase/subscriber"
 	userusecase "newsletter-go/internal/usecase/user"
 )
 
@@ -18,6 +19,7 @@ type Container struct {
 	AuthService       *authusecase.Service
 	UserService       *userusecase.Service
 	NewsletterService *newsletterusecase.Service
+	SubscriberService *subscriberusecase.Service
 }
 
 func NewContainer() *Container {
@@ -45,10 +47,15 @@ func NewContainer() *Container {
 	authService := authusecase.NewService(userRepo, resetRepo, authApiKey, fbCreds, fbKey, mailerSvc)
 	userService := userusecase.NewService(userRepo, authApiKey, fbCreds)
 
+	// vytvoření subscriber repository a service
+	subscriberRepo := postgres.NewUserRepository(db.DB)
+	subscriberService := subscriberusecase.NewService(subscriberRepo)
+
 	return &Container{
 		PostService:       service,
 		AuthService:       authService,
 		UserService:       userService,
 		NewsletterService: newsletterService,
+		SubscriberService: subscriberService,
 	}
 }
