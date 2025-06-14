@@ -84,3 +84,15 @@ func (s *Service) SendForgotPasswordEmail(to, token string) error {
 	}
 	return s.send(to, "Password Reset", body)
 }
+
+type SubscriptionData struct {
+	Token string
+}
+
+func (s *Service) SendSubscriptionConfirmEmail(to, token string) error {
+	body, err := s.render("subscription_confirm.html", SubscriptionData{Token: token})
+	if err != nil {
+		return err
+	}
+	return s.send(to, "Confirm Subscription", body)
+}

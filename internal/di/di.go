@@ -47,9 +47,8 @@ func NewContainer() *Container {
 	authService := authusecase.NewService(userRepo, resetRepo, authApiKey, fbCreds, fbKey, mailerSvc)
 	userService := userusecase.NewService(userRepo, authApiKey, fbCreds)
 
-	// vytvoření subscriber repository a service
-	subscriberRepo := postgres.NewUserRepository(db.DB)
-	subscriberService := subscriberusecase.NewService(subscriberRepo)
+	subscriberRepo := postgres.NewSubscriptionRepository(db.DB)
+	subscriberService := subscriberusecase.NewService(subscriberRepo, mailerSvc)
 
 	return &Container{
 		PostService:       service,
