@@ -2,6 +2,9 @@ package subscriber
 
 import (
 	"context"
+	"errors"
+	"time"
+
 	"github.com/google/uuid"
 	"newsletter-go/domain"
 	"newsletter-go/internal/mailer"
@@ -12,16 +15,34 @@ type Service struct {
 	mailer *mailer.Service
 }
 
+var ErrTooFrequent = errors.New("confirmation email sent recently")
+
 func NewService(r domain.SubscriptionRepository, m *mailer.Service) *Service {
 	return &Service{repo: r, mailer: m}
 }
 
 func (s *Service) Subscribe(ctx context.Context, newsletterID, email string) (string, error) {
-	token := uuid.New().String()
-	sub := &domain.Subscription{NewsletterID: newsletterID, Email: email, Token: token}
-	if err := s.repo.Create(ctx, sub); err != nil {
+	existing, err := s.repo.GetByNewsletterEmail(ctx, newsletterID, email)
+	if err != nil {
 		return "", err
 	}
+
+	token := uuid.New().String()
+
+	if existing != nil {
+		if time.Since(existing.CreatedAt) < time.Minute {
+			return "", ErrTooFrequent
+		}
+		if _, err := s.repo.UpdateToken(ctx, existing.ID, token); err != nil {
+			return "", err
+		}
+	} else {
+		sub := &domain.Subscription{NewsletterID: newsletterID, Email: email, Token: token}
+		if err := s.repo.Create(ctx, sub); err != nil {
+			return "", err
+		}
+	}
+
 	if s.mailer != nil {
 		_ = s.mailer.SendSubscriptionConfirmEmail(email, token)
 	}

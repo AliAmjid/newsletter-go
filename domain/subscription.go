@@ -21,4 +21,6 @@ type SubscriptionRepository interface {
 	Confirm(ctx context.Context, token string) (*Subscription, error)
 	DeleteByToken(ctx context.Context, token string) error
 	ListByNewsletter(ctx context.Context, newsletterID string) ([]*Subscription, error)
+	GetByNewsletterEmail(ctx context.Context, newsletterID, email string) (*Subscription, error)
+	UpdateToken(ctx context.Context, id, token string) (*Subscription, error)
 }

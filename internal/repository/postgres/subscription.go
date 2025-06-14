@@ -63,3 +63,30 @@ func (r *SubscriptionRepository) ListByNewsletter(ctx context.Context, newslette
 	}
 	return subs, rows.Err()
 }
+
+func (r *SubscriptionRepository) GetByNewsletterEmail(ctx context.Context, newsletterID, email string) (*domain.Subscription, error) {
+	var s domain.Subscription
+	err := r.DB.QueryRowContext(ctx,
+		`SELECT id, newsletter_id, email, token, confirmed_at, created_at FROM subscription WHERE newsletter_id = $1 AND email = $2`,
+		newsletterID, email,
+	).Scan(&s.ID, &s.NewsletterID, &s.Email, &s.Token, &s.ConfirmedAt, &s.CreatedAt)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &s, nil
+}
+
+func (r *SubscriptionRepository) UpdateToken(ctx context.Context, id, token string) (*domain.Subscription, error) {
+	var s domain.Subscription
+	err := r.DB.QueryRowContext(ctx,
+		`UPDATE subscription SET token = $1, created_at = NOW() WHERE id = $2 RETURNING id, newsletter_id, email, token, confirmed_at, created_at`,
+		token, id,
+	).Scan(&s.ID, &s.NewsletterID, &s.Email, &s.Token, &s.ConfirmedAt, &s.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return &s, nil
+}

@@ -40,6 +40,10 @@ func (h *SubscriberHandler) subscribe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if _, err := h.service.Subscribe(r.Context(), newsletterID, req.Email); err != nil {
+		if err == subscriberusecase.ErrTooFrequent {
+			respondWithError(w, http.StatusTooManyRequests, err.Error())
+			return
+		}
 		respondWithError(w, http.StatusInternalServerError, "failed to subscribe")
 		return
 	}
