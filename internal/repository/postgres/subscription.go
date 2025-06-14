@@ -41,11 +41,28 @@ func (r *SubscriptionRepository) DeleteByToken(ctx context.Context, token string
 	return err
 }
 
-func (r *SubscriptionRepository) ListByNewsletter(ctx context.Context, newsletterID string) ([]*domain.Subscription, error) {
-	rows, err := r.DB.QueryContext(ctx,
-		`SELECT id, newsletter_id, email, token, confirmed_at, created_at FROM subscription WHERE newsletter_id = $1 AND confirmed_at IS NOT NULL`,
-		newsletterID,
-	)
+func (r *SubscriptionRepository) ListByNewsletter(ctx context.Context, newsletterID, cursor string, limit int) ([]*domain.Subscription, error) {
+	var rows *sql.Rows
+	var err error
+	if cursor == "" {
+		rows, err = r.DB.QueryContext(ctx,
+			`SELECT id, newsletter_id, email, token, confirmed_at, created_at
+                        FROM subscription
+                        WHERE newsletter_id = $1 AND confirmed_at IS NOT NULL
+                        ORDER BY created_at DESC
+                        LIMIT $2`,
+			newsletterID, limit,
+		)
+	} else {
+		rows, err = r.DB.QueryContext(ctx,
+			`SELECT id, newsletter_id, email, token, confirmed_at, created_at
+                        FROM subscription
+                        WHERE newsletter_id = $1 AND confirmed_at IS NOT NULL AND created_at < $2
+                        ORDER BY created_at DESC
+                        LIMIT $3`,
+			newsletterID, cursor, limit,
+		)
+	}
 	if err != nil {
 		return nil, err
 	}

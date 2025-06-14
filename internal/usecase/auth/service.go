@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -20,6 +21,13 @@ import (
 	"newsletter-go/internal/mailer"
 
 	"newsletter-go/domain"
+)
+
+var (
+	ErrInvalidCredentials = errors.New("invalid credentials")
+	ErrUserNotFound       = errors.New("user not found")
+	ErrInvalidToken       = errors.New("invalid token")
+	ErrTokenExpired       = errors.New("token expired")
 )
 
 type Service struct {
@@ -105,14 +113,14 @@ func (s *Service) SignUp(ctx context.Context, email, password string) (string, s
 	if _, err := s.permit.SyncUser(ctx, *newUser); err != nil {
 		return "", "", err
 	}
-	
+
 	return res.IDToken, res.RefreshToken, nil
 }
 
 func (s *Service) Login(ctx context.Context, email, password string) (string, string, error) {
 	res, err := s.firebaseLogin(ctx, email, password)
 	if err != nil {
-		return "", "", err
+		return "", "", ErrInvalidCredentials
 	}
 	return res.IDToken, res.RefreshToken, nil
 }
@@ -120,7 +128,7 @@ func (s *Service) Login(ctx context.Context, email, password string) (string, st
 func (s *Service) RequestPasswordReset(ctx context.Context, email string) error {
 	u, err := s.repo.GetByEmail(ctx, email)
 	if err != nil || u == nil {
-		return fmt.Errorf("user not found")
+		return ErrUserNotFound
 	}
 
 	token := uuid.New().String()
@@ -135,16 +143,16 @@ func (s *Service) RequestPasswordReset(ctx context.Context, email string) error 
 func (s *Service) ConfirmPasswordReset(ctx context.Context, token, newPassword string) error {
 	rt, err := s.resetRepo.Get(ctx, token)
 	if err != nil || rt == nil {
-		return fmt.Errorf("invalid token or user")
+		return ErrInvalidToken
 	}
 
 	if time.Now().Unix() > rt.ExpiresAt {
-		return fmt.Errorf("token expired")
+		return ErrTokenExpired
 	}
 
 	user, err := s.repo.GetByID(ctx, rt.UserID)
 	if err != nil || user == nil {
-		return fmt.Errorf("invalid token or user")
+		return ErrInvalidToken
 	}
 
 	if _, err := s.authClient.UpdateUser(ctx, user.FirebaseUID, (&fbauth.UserToUpdate{}).Password(newPassword)); err != nil {
