@@ -25,7 +25,7 @@ components:
       type: apiKey
       name: Authorization
       in: header
-      description: 'Bearer access token sent as `Authorization: Bearer <token>`'
+      description: "Bearer access token sent as `Authorization: Bearer <token>`"
   schemas:
     # Auth namespace
     AuthRequest:
@@ -202,20 +202,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AuthRequest'
+              $ref: "#/components/schemas/AuthRequest"
       responses:
-        '201':
+        "201":
           description: Editor created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthResponse'
-        '400':
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
           description: Invalid input
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
   /auth/login:
     post:
       tags:
@@ -226,20 +226,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AuthRequest'
+              $ref: "#/components/schemas/AuthRequest"
       responses:
-        '200':
+        "200":
           description: Authentication successful
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthResponse'
-        '401':
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
           description: Invalid credentials
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
   /auth/refresh:
     post:
       tags:
@@ -250,9 +250,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RefreshRequest'
+              $ref: "#/components/schemas/RefreshRequest"
       responses:
-        '200':
+        "200":
           description: New access token
           content:
             application/json:
@@ -261,12 +261,12 @@ paths:
                 properties:
                   accessToken:
                     type: string
-        '401':
+        "401":
           description: Invalid refresh token
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
   /auth/password-reset/request:
     post:
       tags:
@@ -277,16 +277,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PasswordResetRequest'
+              $ref: "#/components/schemas/PasswordResetRequest"
       responses:
-        '200':
+        "200":
           description: Reset email sent
-        '400':
+        "400":
           description: Invalid email
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
   /auth/password-reset/confirm:
     post:
       tags:
@@ -297,16 +297,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PasswordResetConfirm'
+              $ref: "#/components/schemas/PasswordResetConfirm"
       responses:
-        '200':
+        "200":
           description: Password reset successful
-        '400':
+        "400":
           description: Invalid token or password
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
   /newsletters:
     get:
       tags:
@@ -315,14 +315,14 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: Array of newsletters
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Newsletter'
+                  $ref: "#/components/schemas/Newsletter"
     post:
       tags:
         - Newsletters
@@ -334,20 +334,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NewsletterCreate'
+              $ref: "#/components/schemas/NewsletterCreate"
       responses:
-        '201':
+        "201":
           description: Newsletter created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Newsletter'
-        '400':
+                $ref: "#/components/schemas/Newsletter"
+        "400":
           description: Invalid input
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
   /newsletters/{newsletterId}:
     get:
       tags:
@@ -363,18 +363,18 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: Newsletter object
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Newsletter'
-        '404':
+                $ref: "#/components/schemas/Newsletter"
+        "404":
           description: Not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
     patch:
       tags:
         - Newsletters
@@ -393,20 +393,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NewsletterUpdate'
+              $ref: "#/components/schemas/NewsletterUpdate"
       responses:
-        '200':
+        "200":
           description: Updated newsletter
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Newsletter'
-        '404':
+                $ref: "#/components/schemas/Newsletter"
+        "404":
           description: Not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
     delete:
       tags:
         - Newsletters
@@ -421,14 +421,14 @@ paths:
             type: string
             format: uuid
       responses:
-        '204':
+        "204":
           description: Deleted successfully
-        '404':
+        "404":
           description: Not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
   /newsletters/{newsletterId}/posts:
     get:
       tags:
@@ -444,14 +444,14 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: Array of posts
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Post'
+                  $ref: "#/components/schemas/Post"
     post:
       tags:
         - Posts
@@ -470,20 +470,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PostCreate'
+              $ref: "#/components/schemas/PostCreate"
       responses:
-        '201':
+        "201":
           description: Post published
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Post'
-        '400':
+                $ref: "#/components/schemas/Post"
+        "400":
           description: Invalid input
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
   /newsletters/{newsletterId}/subscribers:
     get:
       tags:
@@ -498,15 +498,34 @@ paths:
           schema:
             type: string
             format: uuid
+        - in: query
+          name: cursor
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: return results after this timestamp
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+          description: max number of subscribers to return
       responses:
-        '200':
-          description: Array of subscribers
+        "200":
+          description: Page of subscribers
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Subscriber'
+                type: object
+                properties:
+                  subscribers:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Subscriber"
+                  nextCursor:
+                    type: string
+                    format: date-time
   /newsletters/{newsletterId}/subscribe:
     post:
       tags:
@@ -524,16 +543,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SubscriptionRequest'
+              $ref: "#/components/schemas/SubscriptionRequest"
       responses:
-        '202':
+        "202":
           description: Confirmation email sent
-        '400':
+        "400":
           description: Invalid email
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
   /subscriptions/confirm:
     get:
       tags:
@@ -546,14 +565,14 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Subscription confirmed
-        '400':
+        "400":
           description: Invalid or expired token
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
   /subscriptions/unsubscribe:
     get:
       tags:
@@ -566,14 +585,14 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Unsubscribed successfully
-        '400':
+        "400":
           description: Invalid or expired token
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
   /auth/whoami:
     get:
       tags:
@@ -582,17 +601,17 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: Current user
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
-        '401':
+                $ref: "#/components/schemas/User"
+        "401":
           description: Not logged in
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
   security:
     - bearerAuth: []

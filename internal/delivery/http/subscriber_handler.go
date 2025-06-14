@@ -2,6 +2,7 @@ package http
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
@@ -93,10 +94,19 @@ func (h *SubscriberHandler) listSubscribers(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	newsletterID := chi.URLParam(r, "newsletterId")
-	subs, err := h.service.List(r.Context(), newsletterID)
+	cursor := r.URL.Query().Get("cursor")
+	limitStr := r.URL.Query().Get("limit")
+	limit := 20
+	if limitStr != "" {
+		if v, err := strconv.Atoi(limitStr); err == nil && v > 0 {
+			limit = v
+		}
+	}
+
+	subs, next, err := h.service.List(r.Context(), newsletterID, cursor, limit)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "failed to list subscribers")
 		return
 	}
-	respondWithJSON(w, http.StatusOK, subs)
+	respondWithJSON(w, http.StatusOK, map[string]interface{}{"subscribers": subs, "nextCursor": next})
 }

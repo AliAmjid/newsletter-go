@@ -62,6 +62,14 @@ func (s *Service) Unsubscribe(ctx context.Context, token string) error {
 	return s.repo.DeleteByToken(ctx, token)
 }
 
-func (s *Service) List(ctx context.Context, newsletterID string) ([]*domain.Subscription, error) {
-	return s.repo.ListByNewsletter(ctx, newsletterID)
+func (s *Service) List(ctx context.Context, newsletterID, cursor string, limit int) ([]*domain.Subscription, string, error) {
+	subs, err := s.repo.ListByNewsletter(ctx, newsletterID, cursor, limit)
+	if err != nil {
+		return nil, "", err
+	}
+	next := ""
+	if len(subs) == limit {
+		next = subs[len(subs)-1].CreatedAt.Format(time.RFC3339)
+	}
+	return subs, next, nil
 }

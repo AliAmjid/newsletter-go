@@ -97,8 +97,12 @@ func (h *NewsletterHandler) getNewsletter(w http.ResponseWriter, r *http.Request
 
 	id := chi.URLParam(r, "newsletterId")
 	n, err := h.service.GetByID(r.Context(), id)
-	if err != nil || n == nil {
-		respondWithError(w, http.StatusNotFound, "not found")
+	if err != nil {
+		if err == newsletterusecase.ErrNotFound {
+			respondWithError(w, http.StatusNotFound, "not found")
+		} else {
+			respondWithError(w, http.StatusInternalServerError, "failed to fetch newsletter")
+		}
 		return
 	}
 
@@ -123,8 +127,12 @@ func (h *NewsletterHandler) updateNewsletter(w http.ResponseWriter, r *http.Requ
 
 	id := chi.URLParam(r, "newsletterId")
 	n, err := h.service.GetByID(r.Context(), id)
-	if err != nil || n == nil {
-		respondWithError(w, http.StatusNotFound, "not found")
+	if err != nil {
+		if err == newsletterusecase.ErrNotFound {
+			respondWithError(w, http.StatusNotFound, "not found")
+		} else {
+			respondWithError(w, http.StatusInternalServerError, "failed to fetch newsletter")
+		}
 		return
 	}
 	if n.OwnerID != user.ID {
@@ -163,8 +171,12 @@ func (h *NewsletterHandler) deleteNewsletter(w http.ResponseWriter, r *http.Requ
 
 	id := chi.URLParam(r, "newsletterId")
 	n, err := h.service.GetByID(r.Context(), id)
-	if err != nil || n == nil {
-		respondWithError(w, http.StatusNotFound, "not found")
+	if err != nil {
+		if err == newsletterusecase.ErrNotFound {
+			respondWithError(w, http.StatusNotFound, "not found")
+		} else {
+			respondWithError(w, http.StatusInternalServerError, "failed to fetch newsletter")
+		}
 		return
 	}
 	if n.OwnerID != user.ID {
