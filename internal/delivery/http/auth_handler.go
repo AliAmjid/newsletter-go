@@ -1,22 +1,27 @@
 package http
 
 import (
-	"encoding/json"
 	"net/http"
 	userusecase "newsletter-go/internal/usecase/user"
 
 	"github.com/go-chi/chi/v5"
-
 	authusecase "newsletter-go/internal/usecase/auth"
+
+	"github.com/go-playground/validator/v10"
 )
 
 type AuthHandler struct {
-	service *authusecase.Service
-	users   *userusecase.Service
+	service  *authusecase.Service
+	users    *userusecase.Service
+	validate *validator.Validate
 }
 
 func NewAuthHandler(r chi.Router, s *authusecase.Service, u *userusecase.Service) {
-	h := &AuthHandler{service: s, users: u}
+	h := &AuthHandler{
+		service:  s,
+		users:    u,
+		validate: validator.New(),
+	}
 	r.Route("/auth", func(r chi.Router) {
 		r.Post("/signup", h.signUp)
 		r.Post("/login", h.login)
@@ -28,23 +33,26 @@ func NewAuthHandler(r chi.Router, s *authusecase.Service, u *userusecase.Service
 }
 
 type authRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,min=6"`
 }
 
 type passwordResetRequest struct {
-	Email string `json:"email"`
+	Email string `json:"email" validate:"required,email"`
 }
 
 type passwordResetConfirm struct {
-	Token       string `json:"token"`
-	NewPassword string `json:"newPassword"`
+	Token       string `json:"token" validate:"required"`
+	NewPassword string `json:"newPassword" validate:"required,min=6"`
+}
+
+type refreshRequest struct {
+	RefreshToken string `json:"refreshToken" validate:"required"`
 }
 
 func (h *AuthHandler) signUp(w http.ResponseWriter, r *http.Request) {
 	var req authRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondWithError(w, http.StatusBadRequest, "invalid payload")
+	if !bindAndValidate(w, r, &req, h.validate) {
 		return
 	}
 	access, refresh, err := h.service.SignUp(r.Context(), req.Email, req.Password)
@@ -57,8 +65,7 @@ func (h *AuthHandler) signUp(w http.ResponseWriter, r *http.Request) {
 
 func (h *AuthHandler) login(w http.ResponseWriter, r *http.Request) {
 	var req authRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondWithError(w, http.StatusBadRequest, "invalid payload")
+	if !bindAndValidate(w, r, &req, h.validate) {
 		return
 	}
 	access, refresh, err := h.service.Login(r.Context(), req.Email, req.Password)
@@ -69,14 +76,9 @@ func (h *AuthHandler) login(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, map[string]string{"accessToken": access, "refreshToken": refresh})
 }
 
-type refreshRequest struct {
-	RefreshToken string `json:"refreshToken"`
-}
-
 func (h *AuthHandler) refresh(w http.ResponseWriter, r *http.Request) {
 	var req refreshRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondWithError(w, http.StatusBadRequest, "invalid payload")
+	if !bindAndValidate(w, r, &req, h.validate) {
 		return
 	}
 	access, err := h.service.Refresh(r.Context(), req.RefreshToken)
@@ -89,8 +91,7 @@ func (h *AuthHandler) refresh(w http.ResponseWriter, r *http.Request) {
 
 func (h *AuthHandler) requestReset(w http.ResponseWriter, r *http.Request) {
 	var req passwordResetRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondWithError(w, http.StatusBadRequest, "invalid payload")
+	if !bindAndValidate(w, r, &req, h.validate) {
 		return
 	}
 	if err := h.service.RequestPasswordReset(r.Context(), req.Email); err != nil {
@@ -102,8 +103,7 @@ func (h *AuthHandler) requestReset(w http.ResponseWriter, r *http.Request) {
 
 func (h *AuthHandler) confirmReset(w http.ResponseWriter, r *http.Request) {
 	var req passwordResetConfirm
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondWithError(w, http.StatusBadRequest, "invalid payload")
+	if !bindAndValidate(w, r, &req, h.validate) {
 		return
 	}
 	if err := h.service.ConfirmPasswordReset(r.Context(), req.Token, req.NewPassword); err != nil {

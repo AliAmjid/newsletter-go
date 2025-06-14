@@ -16,19 +16,19 @@ import (
 	"github.com/google/uuid"
 	"github.com/permitio/permit-golang/pkg/config"
 	"github.com/permitio/permit-golang/pkg/models"
-    permitpkg "github.com/permitio/permit-golang/pkg/permit"
-    "newsletter-go/internal/mailer"
+	permitpkg "github.com/permitio/permit-golang/pkg/permit"
+	"newsletter-go/internal/mailer"
 
 	"newsletter-go/domain"
 )
 
 type Service struct {
-	repo         domain.UserRepository
-	resetRepo    domain.PasswordResetRepository
-	permit       *permitpkg.Client
-	firebaseKey  string
-	authClient   *fbauth.Client
-    mailer       *mailer.Service
+	repo        domain.UserRepository
+	resetRepo   domain.PasswordResetRepository
+	permit      *permitpkg.Client
+	firebaseKey string
+	authClient  *fbauth.Client
+	mailer      *mailer.Service
 }
 
 type signUpResponse struct {
@@ -47,7 +47,7 @@ func NewService(r domain.UserRepository, rr domain.PasswordResetRepository, perm
 	if err != nil {
 		panic(err)
 	}
-    return &Service{repo: r, resetRepo: rr, permit: permitpkg.NewPermit(cfg), firebaseKey: firebaseKey, authClient: ac, mailer: m}
+	return &Service{repo: r, resetRepo: rr, permit: permitpkg.NewPermit(cfg), firebaseKey: firebaseKey, authClient: ac, mailer: m}
 }
 
 func (s *Service) firebaseSignUp(ctx context.Context, email, password string) (*signUpResponse, error) {
@@ -127,19 +127,25 @@ func (s *Service) RequestPasswordReset(ctx context.Context, email string) error 
 		return err
 	}
 
-    return s.mailer.SendForgotPasswordEmail(u.Email, token)
+	return s.mailer.SendForgotPasswordEmail(u.Email, token)
 }
 
 func (s *Service) ConfirmPasswordReset(ctx context.Context, token, newPassword string) error {
 	rt, err := s.resetRepo.Get(ctx, token)
 	if err != nil || rt == nil {
-		return fmt.Errorf("invalid token")
+		return fmt.Errorf("invalid token or user")
 	}
+
 	if time.Now().Unix() > rt.ExpiresAt {
 		return fmt.Errorf("token expired")
 	}
 
-	if _, err := s.authClient.UpdateUser(ctx, rt.UserID, (&fbauth.UserToUpdate{}).Password(newPassword)); err != nil {
+	user, err := s.repo.GetByID(ctx, rt.UserID)
+	if err != nil || user == nil {
+		return fmt.Errorf("invalid token or user")
+	}
+
+	if _, err := s.authClient.UpdateUser(ctx, user.FirebaseUID, (&fbauth.UserToUpdate{}).Password(newPassword)); err != nil {
 		return err
 	}
 	if err := s.resetRepo.Delete(ctx, token); err != nil {
