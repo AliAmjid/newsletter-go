@@ -22,7 +22,7 @@ func main() {
 	r := delivery.NewRouter()
 	//r.Use(middleware.Logger)
 
-	delivery.NewPostHandler(r, c.PostService)
+	delivery.NewPostHandler(r, c.PostService, c.UserService)
 	delivery.NewHelloHandler(r, c.UserService)
 	delivery.NewAuthHandler(r, c.AuthService, c.UserService)
 	delivery.NewNewsletterHandler(r, c.NewsletterService, c.UserService)

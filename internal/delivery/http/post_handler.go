@@ -1,45 +1,67 @@
 package http
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-playground/validator/v10"
 
 	"newsletter-go/domain"
 	postusecase "newsletter-go/internal/usecase/post"
+	userusecase "newsletter-go/internal/usecase/user"
 )
 
 type PostHandler struct {
-	service *postusecase.Service
+	service  *postusecase.Service
+	users    *userusecase.Service
+	validate *validator.Validate
 }
 
-func NewPostHandler(r chi.Router, s *postusecase.Service) {
-	h := &PostHandler{service: s}
+type postCreateRequest struct {
+	Title   string `json:"title" validate:"required"`
+	Content string `json:"content"`
+}
 
-	r.Route("/posts", func(r chi.Router) {
+func NewPostHandler(r chi.Router, s *postusecase.Service, u *userusecase.Service) {
+	h := &PostHandler{
+		service:  s,
+		users:    u,
+		validate: validator.New(),
+	}
+
+	r.Route("/newsletters/{newsletterId}/posts", func(r chi.Router) {
 		r.Post("/", h.createPost)
-		r.Get("/{id}", h.getPost)
 	})
 }
 
 func (h *PostHandler) createPost(w http.ResponseWriter, r *http.Request) {
-	var p domain.Post
-	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
+	newsletterId := chi.URLParam(r, "newsletterId")
+
+	user, err := h.users.IsLoggedIn(r)
+	if err != nil || user == nil {
+		respondWithError(w, http.StatusUnauthorized, err.Error())
 		return
 	}
 
-	if err := h.service.Save(r.Context(), &p); err != nil {
+	// if ok, err := h.users.IsAllowedTo(r, "create", "post"); err != nil || !ok {
+	// 	respondWithError(w, http.StatusForbidden, "forbidden")
+	// 	return
+	// }
+
+	var req postCreateRequest
+	if !bindAndValidate(w, r, &req, h.validate) {
+		return
+	}
+
+	p := &domain.Post{
+		NewsletterId: newsletterId,
+		Title:        req.Title,
+		Content:      req.Content,
+	}
+
+	if err := h.service.Save(r.Context(), p); err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to save post")
 		return
 	}
-
-	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("Post recieved"))
-}
-
-func (h *PostHandler) getPost(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
-	w.Write([]byte("TODO post with ID " + id))
+	respondWithJSON(w, http.StatusCreated, p)
 }

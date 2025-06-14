@@ -3,10 +3,14 @@ package domain
 import "context"
 
 type Post struct {
-	Title   string `json:"title"`
-	Content string `json:"content"`
+	ID           string `json:"id"`
+	NewsletterId string `json:"newsletter_id"`
+	Title        string `json:"title"`
+	Content      string `json:"content"`
+	PublishedAt  string `json:"published_at"`
 }
 
 type PostRepository interface {
 	Store(ctx context.Context, p *Post) error
+	Create(ctx context.Context, p *Post) error
 }

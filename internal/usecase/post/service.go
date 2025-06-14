@@ -18,5 +18,5 @@ func NewService(r domain.PostRepository) *Service {
 
 // Save persists a post via the repository.
 func (s *Service) Save(ctx context.Context, p *domain.Post) error {
-	return s.repo.Store(ctx, p)
+	return s.repo.Create(ctx, p)
 }
