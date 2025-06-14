@@ -67,4 +67,4 @@ jobs:
           aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
           cd ~/newsletter-go
           docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
-          dotenvx run -fk .env.keys -f .env -- docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
+          npx @dotenvx/dotenvx run -fk .env.keys -f .env -- docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
