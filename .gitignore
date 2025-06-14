@@ -3,8 +3,11 @@
 .vscode
 
 # Config files
-.env
+.env.keys
 
 # Air build output
 tmp/
 
+node_modules/
+
+.terraform/
