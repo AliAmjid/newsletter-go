@@ -37,6 +37,11 @@ type authRequest struct {
 	Password string `json:"password" validate:"required,min=6"`
 }
 
+type whoamiResponse struct {
+	ID    string `json:"id"`
+	Email string `json:"email"`
+}
+
 type passwordResetRequest struct {
 	Email string `json:"email" validate:"required,email"`
 }
@@ -138,5 +143,9 @@ func (h *AuthHandler) whoAmI(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusUnauthorized, err.Error())
 		return
 	}
-	respondWithJSON(w, http.StatusOK, map[string]string{"id": u.ID, "email": u.Email})
+
+	respondWithJSON(w, http.StatusOK, whoamiResponse{
+		ID:    u.ID,
+		Email: u.Email,
+	})
 }

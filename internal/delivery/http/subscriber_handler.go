@@ -3,6 +3,7 @@ package http
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
@@ -83,6 +84,17 @@ func (h *SubscriberHandler) unsubscribe(w http.ResponseWriter, r *http.Request) 
 	w.WriteHeader(http.StatusOK)
 }
 
+type SubscriberResponse struct {
+	Email       string     `json:"email"`
+	ConfirmedAt *time.Time `json:"confirmedAt,omitempty"`
+	CreatedAt   time.Time  `json:"createdAt,omitempty"`
+}
+
+type PaginatedSubscriberResponse struct {
+	Subscribers []SubscriberResponse `json:"subscribers"`
+	NextCursor  string               `json:"nextCursor"`
+}
+
 func (h *SubscriberHandler) listSubscribers(w http.ResponseWriter, r *http.Request) {
 	user, err := h.users.IsLoggedIn(r)
 	if err != nil || user == nil {
@@ -108,5 +120,20 @@ func (h *SubscriberHandler) listSubscribers(w http.ResponseWriter, r *http.Reque
 		respondWithError(w, http.StatusInternalServerError, "failed to list subscribers")
 		return
 	}
-	respondWithJSON(w, http.StatusOK, map[string]interface{}{"subscribers": subs, "nextCursor": next})
+
+	respSubs := make([]SubscriberResponse, 0, len(subs))
+	for _, s := range subs {
+		respSubs = append(respSubs, SubscriberResponse{
+			Email:       s.Email,
+			ConfirmedAt: s.ConfirmedAt,
+			CreatedAt:   s.CreatedAt,
+		})
+	}
+
+	result := PaginatedSubscriberResponse{
+		Subscribers: respSubs,
+		NextCursor:  next,
+	}
+
+	respondWithJSON(w, http.StatusOK, result)
 }

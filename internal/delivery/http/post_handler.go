@@ -44,7 +44,6 @@ func (h *PostHandler) createPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if the user is allowed to create a post
 	if ok, err := h.users.IsAllowedTo(r, "create", "post"); err != nil || !ok {
 		respondWithError(w, http.StatusForbidden, "forbidden")
 		return
@@ -55,13 +54,11 @@ func (h *PostHandler) createPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Bind and validate the request
 	var req postCreateRequest
 	if !bindAndValidate(w, r, &req, h.validate) {
 		return
 	}
 
-	// Create the post in DB
 	p := &domain.Post{
 		NewsletterId: newsletterId,
 		Title:        req.Title,
@@ -82,7 +79,6 @@ func (h *PostHandler) listPosts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if the user is allowed to read a posts
 	if ok, err := h.users.IsAllowedTo(r, "read", "post"); err != nil || !ok {
 		respondWithError(w, http.StatusForbidden, "forbidden")
 		return

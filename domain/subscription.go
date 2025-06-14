@@ -15,7 +15,6 @@ type Subscription struct {
 	CreatedAt    time.Time
 }
 
-// SubscriptionRepository defines operations for newsletter subscriptions.
 type SubscriptionRepository interface {
 	Create(ctx context.Context, s *Subscription) error
 	Confirm(ctx context.Context, token string) (*Subscription, error)
