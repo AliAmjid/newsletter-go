@@ -56,8 +56,9 @@ POSTGRES_CONNECTION_STRING=<db-url>
 PERMIT_API_KEY=<permit-key>
 FIREBASE_CREDENTIALS=<path-to-service-account>
 FIREBASE_API_KEY=<web-api-key>
-SENDGRID_API_KEY=<sendgrid-key>
-SENDGRID_FROM_EMAIL=<from-email>
+MAILGUN_DOMAIN=<mg-domain>
+MAILGUN_API_KEY=<mg-key>
+MAILGUN_FROM_EMAIL=<from-email>
 ```
 
 ## Database migrations
