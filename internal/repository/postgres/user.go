@@ -37,6 +37,22 @@ func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*domain.
 	return &u, nil
 }
 
+func (r *UserRepository) Update(ctx context.Context, u *domain.User) error {
+	_, err := r.DB.ExecContext(ctx,
+		`UPDATE "user" SET email = $1, firebase_uid = $2 WHERE id = $3`,
+		u.Email, u.FirebaseUID, u.ID,
+	)
+	return err
+}
+
+func (r *UserRepository) Delete(ctx context.Context, id string) error {
+	_, err := r.DB.ExecContext(ctx,
+		`DELETE FROM "user" WHERE id = $1`,
+		id,
+	)
+	return err
+}
+
 func (r *UserRepository) GetByID(ctx context.Context, id string) (*domain.User, error) {
 	var u domain.User
 	err := r.DB.QueryRowContext(ctx,
