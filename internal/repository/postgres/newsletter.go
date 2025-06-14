@@ -22,7 +22,7 @@ func (r *NewsletterRepository) ListByOwner(ctx context.Context, ownerID string) 
 		ownerID,
 	)
 	if err != nil {
-		return nil, err
+		return []*domain.Newsletter{}, err
 	}
 	defer rows.Close()
 
@@ -30,12 +30,15 @@ func (r *NewsletterRepository) ListByOwner(ctx context.Context, ownerID string) 
 	for rows.Next() {
 		var n domain.Newsletter
 		if err := rows.Scan(&n.ID, &n.Name, &n.Description, &n.OwnerID, &n.CreatedAt); err != nil {
-			return nil, err
+			return []*domain.Newsletter{}, err
 		}
 		list = append(list, &n)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return []*domain.Newsletter{}, err
+	}
+	if list == nil {
+		list = []*domain.Newsletter{}
 	}
 	return list, nil
 }
