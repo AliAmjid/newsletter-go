@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -39,6 +40,13 @@ type PaginatedPostResponse struct {
 	NextCursor string         `json:"nextCursor"`
 }
 
+type SinglePostResponse struct {
+	Post        *domain.Post               `json:"post"`
+	TotalSend   int                        `json:"totalSend"`
+	TotalOpened int                        `json:"totalOpened"`
+	Deliveries  []*domain.PostDeliveryInfo `json:"deliveries"`
+}
+
 func NewPostHandler(r chi.Router, s *postusecase.Service, u *userusecase.Service) {
 	h := &PostHandler{
 		service:  s,
@@ -50,9 +58,8 @@ func NewPostHandler(r chi.Router, s *postusecase.Service, u *userusecase.Service
 		r.Get("/", h.listPosts)
 		r.Post("/", h.createPost)
 		r.Post("/{postId}/publish", h.publishPost)
+		r.Get("/{postId}", h.getPost)
 	})
-
-	r.Get("/posts/{postId}", h.getPost)
 	r.Get("/post-deliveries/{deliveryId}/pixel", h.pixel)
 }
 
@@ -92,6 +99,7 @@ func (h *PostHandler) createPost(w http.ResponseWriter, r *http.Request) {
 			respondWithError(w, http.StatusForbidden, err.Error())
 			return
 		}
+		fmt.Printf("%+v\n", err)
 		respondWithError(w, http.StatusInternalServerError, "Failed to save post")
 		return
 	}
@@ -208,10 +216,11 @@ func (h *PostHandler) getPost(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusInternalServerError, "Failed to fetch post")
 		return
 	}
-	respondWithJSON(w, http.StatusOK, map[string]interface{}{
-		"post":        p,
-		"totalSend":   m.TotalSend,
-		"totalOpened": m.TotalOpened,
-		"deliveries":  m.Deliveries,
-	})
+	result := SinglePostResponse{
+		Post:        p,
+		TotalSend:   m.TotalSend,
+		TotalOpened: m.TotalOpened,
+		Deliveries:  m.Deliveries,
+	}
+	respondWithJSON(w, http.StatusOK, result)
 }
