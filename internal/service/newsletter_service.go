@@ -32,3 +32,7 @@ func (s *NewsletterService) Update(ctx context.Context, n *domain.Newsletter) er
 func (s *NewsletterService) Delete(ctx context.Context, id string) error {
 	return s.repo.Delete(ctx, id)
 }
+
+func (s *NewsletterService) IsOwner(ctx context.Context, newsletterId, userId string) (bool, error) {
+	return s.repo.IsOwner(ctx, newsletterId, userId)
+}

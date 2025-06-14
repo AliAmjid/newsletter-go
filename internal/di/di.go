@@ -26,11 +26,11 @@ func NewContainer() *Container {
 	conn := os.Getenv("POSTGRES_CONNECTION_STRING")
 	db.Init(conn)
 
-	repo := postgres.NewPostRepository(db.DB)
-	service := postusecase.NewService(repo)
-
 	newsletterRepo := postgres.NewNewsletterRepository(db.DB)
 	newsletterService := newsletterusecase.NewService(newsletterRepo)
+
+	repo := postgres.NewPostRepository(db.DB)
+	service := postusecase.NewService(repo, newsletterRepo)
 
 	userRepo := postgres.NewUserRepository(db.DB)
 	resetRepo := postgres.NewPasswordResetRepository(db.DB)
