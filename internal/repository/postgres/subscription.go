@@ -81,6 +81,31 @@ func (r *SubscriptionRepository) ListByNewsletter(ctx context.Context, newslette
 	return subs, rows.Err()
 }
 
+func (r *SubscriptionRepository) ListByNewsletterAll(ctx context.Context, newsletterID string) ([]*domain.Subscription, error) {
+	rows, err := r.DB.QueryContext(ctx,
+		`SELECT id, newsletter_id, email, token, confirmed_at, created_at
+                 FROM subscription
+                 WHERE newsletter_id = $1 AND confirmed_at IS NOT NULL`,
+		newsletterID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var subs []*domain.Subscription
+	for rows.Next() {
+		var s domain.Subscription
+		if err := rows.Scan(&s.ID, &s.NewsletterID, &s.Email, &s.Token, &s.ConfirmedAt, &s.CreatedAt); err != nil {
+			return nil, err
+		}
+		subs = append(subs, &s)
+	}
+	if subs == nil {
+		subs = []*domain.Subscription{}
+	}
+	return subs, rows.Err()
+}
+
 func (r *SubscriptionRepository) GetByNewsletterEmail(ctx context.Context, newsletterID, email string) (*domain.Subscription, error) {
 	var s domain.Subscription
 	err := r.DB.QueryRowContext(ctx,

@@ -23,7 +23,8 @@ type SubscriptionRepository interface {
 	// Results are ordered by creation date descending. If cursor is provided,
 	// only subscriptions created before the cursor will be returned. The
 	// number of results is limited by limit.
-	ListByNewsletter(ctx context.Context, newsletterID, cursor string, limit int) ([]*Subscription, error)
-	GetByNewsletterEmail(ctx context.Context, newsletterID, email string) (*Subscription, error)
-	UpdateToken(ctx context.Context, id, token string) (*Subscription, error)
+        ListByNewsletter(ctx context.Context, newsletterID, cursor string, limit int) ([]*Subscription, error)
+        ListByNewsletterAll(ctx context.Context, newsletterID string) ([]*Subscription, error)
+        GetByNewsletterEmail(ctx context.Context, newsletterID, email string) (*Subscription, error)
+        UpdateToken(ctx context.Context, id, token string) (*Subscription, error)
 }
