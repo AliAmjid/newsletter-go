@@ -60,6 +60,38 @@ SENDGRID_API_KEY=<sendgrid-key>
 SENDGRID_FROM_EMAIL=<from-email>
 ```
 
+### Environment Management with dotenvx
+
+This project uses [dotenvx](https://dotenvx.com/) for secure environment variable management. dotenvx encrypts our environment variables and allows us to safely store them in version control.
+
+#### Key Features
+- **Encrypted Environment Variables**: All sensitive data is encrypted in the `.env.vault` file
+- **Environment Separation**: Support for different environments (development, production, etc.)
+- **Secure Deployment**: Private keys are never committed to the repository
+
+#### Usage
+
+1. **Setup**: Create your `.env` file with your actual environment variables
+
+2. **Encrypt**: Generate encrypted `.env.vault` and key files:
+   ```bash
+   npx dotenvx encrypt
+   ```
+
+3. **Run Locally**: Use dotenvx to run the application:
+   ```bash
+   npx dotenvx run -- go run app/main.go
+   ```
+
+4. **Deploy**: In production, set the `DOTENV_KEY` environment variable to the private key from `.env.keys`
+
+5. **Rotate Keys**: Update encryption keys:
+   ```bash
+   npx dotenvx rotate
+   ```
+
+For more information, visit [dotenvx documentation](https://dotenvx.com/docs/).
+
 ## Database migrations
 DB migration files are stored in `db/migrations` folder. To apply migrations call following command:
 
