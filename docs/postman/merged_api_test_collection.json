@@ -1,0 +1,535 @@
+{
+  "info": {
+    "_postman_id": "merged-collection-20250614",
+    "name": "Go Newsletter API (All Endpoints)",
+    "description": "Kompletní testovací kolekce pro všechny endpointy newsletter API.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Sign Up",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/signup",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "signup"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {pm.response.to.have.status(201);});",
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set('accessToken', jsonData.accessToken);",
+                  "pm.environment.set('refreshToken', jsonData.refreshToken);",
+                  "pm.test(\"accessToken present\", function () {pm.expect(jsonData).to.have.property('accessToken');});",
+                  "pm.test(\"refreshToken present\", function () {pm.expect(jsonData).to.have.property('refreshToken');});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {pm.response.to.have.status(200);});",
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set('accessToken', jsonData.accessToken);",
+                  "pm.environment.set('refreshToken', jsonData.refreshToken);",
+                  "pm.test(\"accessToken present\", function () {pm.expect(jsonData).to.have.property('accessToken');});",
+                  "pm.test(\"refreshToken present\", function () {pm.expect(jsonData).to.have.property('refreshToken');});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/refresh",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "refresh"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {pm.response.to.have.status(200);});",
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set('accessToken', jsonData.accessToken);",
+                  "pm.test(\"accessToken present\", function () {pm.expect(jsonData).to.have.property('accessToken');});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Password Reset Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/password-reset/request",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "password-reset", "request"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {pm.response.to.have.status(200);});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Password Reset Confirm",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{resetToken}}\",\n  \"newPassword\": \"{{newPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/password-reset/confirm",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "password-reset", "confirm"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {pm.response.to.have.status(200);});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Who Am I",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/whoami",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "whoami"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {pm.response.to.have.status(200);});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"has user id\", function () {pm.expect(jsonData).to.have.property('id');});",
+                  "pm.test(\"has email\", function () {pm.expect(jsonData).to.have.property('email');});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Newsletters",
+      "item": [
+        {
+          "name": "List Newsletters",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/newsletters",
+              "host": ["{{base_url}}"],
+              "path": ["newsletters"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {pm.response.to.have.status(200);});",
+                  "var arr = pm.response.json();",
+                  "pm.test(\"Is array\", function () {pm.expect(arr).to.be.an('array');});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Newsletter",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Test Newsletter\",\n  \"description\": \"Test description\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/newsletters",
+              "host": ["{{base_url}}"],
+              "path": ["newsletters"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {pm.response.to.have.status(201);});",
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set('newsletterId', jsonData.id);",
+                  "pm.test(\"Newsletter ID present\", function () {pm.expect(jsonData).to.have.property('id');});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Newsletter",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/newsletters/{{newsletterId}}",
+              "host": ["{{base_url}}"],
+              "path": ["newsletters", "{{newsletterId}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {pm.response.to.have.status(200);});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"has id\", function () {pm.expect(jsonData).to.have.property('id');});",
+                  "pm.test(\"has title\", function () {pm.expect(jsonData).to.have.property('title');});",
+                  "pm.test(\"has description\", function () {pm.expect(jsonData).to.have.property('description');});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Newsletter",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Newsletter Title\",\n  \"description\": \"Updated description\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/newsletters/{{newsletterId}}",
+              "host": ["{{base_url}}"],
+              "path": ["newsletters", "{{newsletterId}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {pm.response.to.have.status(200);});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"has id\", function () {pm.expect(jsonData).to.have.property('id');});",
+                  "pm.test(\"has updated title\", function () {pm.expect(jsonData.title).to.eql('Updated Newsletter Title');});",
+                  "pm.test(\"has updated description\", function () {pm.expect(jsonData.description).to.eql('Updated description');});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Newsletter",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/newsletters/{{newsletterId}}",
+              "host": ["{{base_url}}"],
+              "path": ["newsletters", "{{newsletterId}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 204\", function () {pm.response.to.have.status(204);});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Posts",
+      "item": [
+        {
+          "name": "List Posts in Newsletter",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/newsletters/{{newsletterId}}/posts",
+              "host": ["{{base_url}}"],
+              "path": ["newsletters", "{{newsletterId}}", "posts"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {pm.response.to.have.status(200);});",
+                  "var arr = pm.response.json();",
+                  "pm.test(\"Is array\", function () {pm.expect(arr).to.be.an('array');});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Post in Newsletter",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Test Post\",\n  \"content\": \"Test content\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/newsletters/{{newsletterId}}/posts",
+              "host": ["{{base_url}}"],
+              "path": ["newsletters", "{{newsletterId}}", "posts"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {pm.response.to.have.status(201);});",
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set('postId', jsonData.id);",
+                  "pm.test(\"Post ID present\", function () {pm.expect(jsonData).to.have.property('id');});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Subscribers",
+      "item": [
+        {
+          "name": "List Subscribers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/newsletters/{{newsletterId}}/subscribers",
+              "host": ["{{base_url}}"],
+              "path": ["newsletters", "{{newsletterId}}", "subscribers"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {pm.response.to.have.status(200);});",
+                  "var arr = pm.response.json();",
+                  "pm.test(\"Is array\", function () {pm.expect(arr).to.be.an('array');});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Subscriptions",
+      "item": [
+        {
+          "name": "Subscribe to Newsletter",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test-subscriber@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/newsletters/{{newsletterId}}/subscribe",
+              "host": ["{{base_url}}"],
+              "path": ["newsletters", "{{newsletterId}}", "subscribe"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 202\", function () {pm.response.to.have.status(202);});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Confirm Subscription",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/subscriptions/confirm?token={{subscriptionToken}}",
+              "host": ["{{base_url}}"],
+              "path": ["subscriptions", "confirm"],
+              "query": [
+                {"key": "token", "value": "{{subscriptionToken}}"}
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {pm.response.to.have.status(200);});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Unsubscribe",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/subscriptions/unsubscribe?token={{unsubscribeToken}}",
+              "host": ["{{base_url}}"],
+              "path": ["subscriptions", "unsubscribe"],
+              "query": [
+                {"key": "token", "value": "{{unsubscribeToken}}"}
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {pm.response.to.have.status(200);});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
