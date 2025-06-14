@@ -21,4 +21,5 @@ type NewsletterRepository interface {
 	GetByID(ctx context.Context, id string) (*Newsletter, error)
 	Update(ctx context.Context, n *Newsletter) error
 	Delete(ctx context.Context, id string) error
+	IsOwner(ctx context.Context, newsletterId, userId string) (bool, error)
 }

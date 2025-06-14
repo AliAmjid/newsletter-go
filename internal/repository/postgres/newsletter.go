@@ -80,3 +80,15 @@ func (r *NewsletterRepository) Delete(ctx context.Context, id string) error {
 	)
 	return err
 }
+
+func (r *NewsletterRepository) IsOwner(ctx context.Context, newsletterId, userId string) (bool, error) {
+	var exists bool
+	err := r.DB.QueryRowContext(ctx,
+		`SELECT EXISTS(SELECT 1 FROM newsletter WHERE id = $1 AND owner_id = $2)`,
+		newsletterId, userId,
+	).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
+}
