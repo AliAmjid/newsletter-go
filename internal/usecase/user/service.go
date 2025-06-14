@@ -22,8 +22,8 @@ type Service struct {
 	authClient *auth.Client
 }
 
-func NewService(r domain.UserRepository, apiKey, creds string) *Service {
-	cfg := config.NewConfigBuilder(apiKey).WithPdpUrl("https://cloudpdp.api.permit.io").Build()
+func NewService(r domain.UserRepository, permitKey, creds string) *Service {
+	cfg := config.NewConfigBuilder(permitKey).WithPdpUrl("https://cloudpdp.api.permit.io").Build()
 	app, err := firebase.NewApp(context.Background(), nil, option.WithCredentialsFile(creds))
 	if err != nil {
 		panic(err)
