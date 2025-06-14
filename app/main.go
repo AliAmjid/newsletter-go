@@ -27,6 +27,8 @@ func main() {
 	delivery.NewAuthHandler(r, c.AuthService, c.UserService)
 	delivery.NewNewsletterHandler(r, c.NewsletterService, c.UserService)
 
+	delivery.NewSubscriberHandler(r, c.SubscriberService)
+
 	fmt.Println("Server starting on port 3000")
 	server := &http.Server{
 		Addr:    ":3000",
