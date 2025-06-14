@@ -38,15 +38,6 @@ jobs:
         tags: |
           ${{ steps.login-ecr.outputs.registry }}/newsletter-go:latest
           ${{ steps.login-ecr.outputs.registry }}/newsletter-go:${{ github.sha }}
-          
-    - name: Copy docker-compose.yml to EC2
-      uses: appleboy/scp-action@v0.1.7
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USER }}
-        key: ${{ secrets.EC2_SSH_KEY }}
-        source: ./docker-compose.yml
-        target: ~/newsletter-go/
 
     - name: Copy docker-compose.prod.yml to EC2
       uses: appleboy/scp-action@v0.1.7
@@ -55,6 +46,15 @@ jobs:
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
         source: ./docker-compose.prod.yml
+        target: ~/newsletter-go/
+
+    - name: Copy .env to EC2
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        source: .env
         target: ~/newsletter-go/
 
     - name: Deploy with docker-compose over SSH
@@ -66,5 +66,5 @@ jobs:
         script: |
           aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
           cd ~/newsletter-go
-          docker-compose -f docker-compose.yml -f docker-compose.prod.yml pull
-          docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
+          docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
+          dotenvx run -fk .env.keys -f .env -- docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
