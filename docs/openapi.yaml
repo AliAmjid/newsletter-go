@@ -159,6 +159,14 @@ components:
       required:
         - title
         - content
+    PostDeliveryInfo:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        opened:
+          type: boolean
     # Subscribers namespace
     Subscriber:
       type: object
@@ -531,6 +539,58 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Post"
+  /posts/{postId}:
+    get:
+      tags:
+        - Posts
+      summary: Get post metrics
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: postId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Post metrics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  post:
+                    $ref: "#/components/schemas/Post"
+                  totalSend:
+                    type: integer
+                  totalOpened:
+                    type: integer
+                  deliveries:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/PostDeliveryInfo"
+  /post-deliveries/{deliveryId}/pixel:
+    get:
+      tags:
+        - Posts
+      summary: Track email open
+      parameters:
+        - in: path
+          name: deliveryId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Tracking pixel
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
   /newsletters/{newsletterId}/subscribers:
     get:
       tags:

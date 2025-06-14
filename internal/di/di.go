@@ -30,7 +30,7 @@ func NewContainer() *Container {
 	newsletterService := newsletterusecase.NewService(newsletterRepo)
 
 	repo := postgres.NewPostRepository(db.DB)
-	service := postusecase.NewService(repo, newsletterRepo)
+	deliveryRepo := postgres.NewPostDeliveryRepository(db.DB)
 
 	userRepo := postgres.NewUserRepository(db.DB)
 	resetRepo := postgres.NewPasswordResetRepository(db.DB)
@@ -49,6 +49,8 @@ func NewContainer() *Container {
 
 	subscriberRepo := postgres.NewSubscriptionRepository(db.DB)
 	subscriberService := subscriberusecase.NewService(subscriberRepo, mailerSvc)
+
+	service := postusecase.NewService(repo, newsletterRepo, subscriberRepo, deliveryRepo, mailerSvc)
 
 	return &Container{
 		PostService:       service,

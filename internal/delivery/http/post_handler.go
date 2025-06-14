@@ -1,6 +1,7 @@
 package http
 
 import (
+	"encoding/base64"
 	"net/http"
 	"strconv"
 	"time"
@@ -17,6 +18,13 @@ type PostHandler struct {
 	service  *postusecase.Service
 	users    *userusecase.Service
 	validate *validator.Validate
+}
+
+var pixelData []byte
+
+func init() {
+	b, _ := base64.StdEncoding.DecodeString("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMB/6X9ZPkAAAAASUVORK5CYII=")
+	pixelData = b
 }
 
 type postCreateRequest struct {
@@ -37,6 +45,9 @@ func NewPostHandler(r chi.Router, s *postusecase.Service, u *userusecase.Service
 		r.Post("/", h.createPost)
 		r.Post("/{postId}/publish", h.publishPost)
 	})
+
+	r.Get("/posts/{postId}", h.getPost)
+	r.Get("/post-deliveries/{deliveryId}/pixel", h.pixel)
 }
 
 func (h *PostHandler) createPost(w http.ResponseWriter, r *http.Request) {
@@ -154,4 +165,47 @@ func (h *PostHandler) publishPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respondWithJSON(w, http.StatusOK, p)
+}
+
+func (h *PostHandler) pixel(w http.ResponseWriter, r *http.Request) {
+	deliveryId := chi.URLParam(r, "deliveryId")
+	if deliveryId != "" {
+		_ = h.service.MarkOpened(r.Context(), deliveryId)
+	}
+	w.Header().Set("Content-Type", "image/png")
+	w.Write(pixelData)
+}
+
+func (h *PostHandler) getPost(w http.ResponseWriter, r *http.Request) {
+	user, err := h.users.IsLoggedIn(r)
+	if err != nil || user == nil {
+		respondWithError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	if ok, err := h.users.IsAllowedTo(r, "read", "post"); err != nil || !ok {
+		respondWithError(w, http.StatusForbidden, "forbidden")
+		return
+	}
+
+	postId := chi.URLParam(r, "postId")
+	p, m, err := h.service.GetWithMetrics(r.Context(), user.ID, postId)
+	if err != nil {
+		if err == postusecase.ErrNotOwner {
+			respondWithError(w, http.StatusForbidden, "You are not the owner of this newsletter")
+			return
+		}
+		if err == postusecase.ErrNotFound {
+			respondWithError(w, http.StatusNotFound, "not found")
+			return
+		}
+		respondWithError(w, http.StatusInternalServerError, "Failed to fetch post")
+		return
+	}
+	respondWithJSON(w, http.StatusOK, map[string]interface{}{
+		"post":        p,
+		"totalSend":   m.TotalSend,
+		"totalOpened": m.TotalOpened,
+		"deliveries":  m.Deliveries,
+	})
 }
