@@ -28,13 +28,14 @@ func (s *Service) Subscribe(ctx context.Context, newsletterID, email string) (st
 		return "", err
 	}
 
-	if existing.ConfirmedAt != nil {
-		return "", ErrAlreadySubscribed
-	}
-
 	token := uuid.New().String()
 
 	if existing != nil {
+
+		if existing.ConfirmedAt != nil {
+			return "", ErrAlreadySubscribed
+		}
+
 		if time.Since(existing.CreatedAt) < time.Minute {
 			return "", ErrTooFrequent
 		}
