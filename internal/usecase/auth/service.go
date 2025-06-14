@@ -101,9 +101,11 @@ func (s *Service) SignUp(ctx context.Context, email, password string) (string, s
 	}
 	newUser := models.NewUserCreate(u.ID)
 	newUser.Email = &u.Email
+
 	if _, err := s.permit.SyncUser(ctx, *newUser); err != nil {
 		return "", "", err
 	}
+	
 	return res.IDToken, res.RefreshToken, nil
 }
 
