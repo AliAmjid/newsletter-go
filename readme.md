@@ -3,7 +3,6 @@
 ### Diagram
 
 ![img.png](docs/img.png)
-
 ## Project Structure
 
 The source code follows a simplified version of the [go-clean-arch](https://github.com/bxcodec/go-clean-arch) layout:
@@ -67,6 +66,9 @@ DB migration files are stored in `db/migrations` folder. To apply migrations cal
 
 ```bash
 goose postgres "postgres://postgres:mysecretpassword@localhost:5432/postgres?sslmode=disable" up
+
+## Documentation of implementation
+[Go to documentation](./docs/implementation/readme.md)
 ```
 
 To create a new migration:
