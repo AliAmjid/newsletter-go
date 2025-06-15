@@ -63,8 +63,8 @@ func (s *Service) Unsubscribe(ctx context.Context, token string) error {
 	return s.repo.DeleteByToken(ctx, token)
 }
 
-func (s *Service) List(ctx context.Context, newsletterID, cursor string, limit int) ([]*domain.Subscription, string, error) {
-	subs, err := s.repo.ListByNewsletter(ctx, newsletterID, cursor, limit)
+func (s *Service) List(ctx context.Context, newsletterID, cursor string, limit int, search string) ([]*domain.Subscription, string, error) {
+	subs, err := s.repo.ListByNewsletter(ctx, newsletterID, cursor, limit, search)
 	if err != nil {
 		return nil, "", err
 	}

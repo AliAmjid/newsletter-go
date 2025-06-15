@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"newsletter-go/domain"
 )
@@ -36,7 +37,7 @@ func (r *PostDeliveryRepository) MarkOpened(ctx context.Context, id string) erro
 
 func (r *PostDeliveryRepository) ListByPost(ctx context.Context, postID string) ([]*domain.PostDeliveryInfo, error) {
 	rows, err := r.DB.QueryContext(ctx,
-		`SELECT s.email, d.opened FROM post_delivery d JOIN subscription s ON s.id = d.subscription_id WHERE d.post_id = $1`,
+		`SELECT d.id, s.email, d.opened FROM post_delivery d JOIN subscription s ON s.id = d.subscription_id WHERE d.post_id = $1`,
 		postID,
 	)
 	if err != nil {
@@ -46,7 +47,38 @@ func (r *PostDeliveryRepository) ListByPost(ctx context.Context, postID string) 
 	var infos []*domain.PostDeliveryInfo
 	for rows.Next() {
 		var info domain.PostDeliveryInfo
-		if err := rows.Scan(&info.Email, &info.Opened); err != nil {
+		if err := rows.Scan(&info.ID, &info.Email, &info.Opened); err != nil {
+			return nil, err
+		}
+		infos = append(infos, &info)
+	}
+	if infos == nil {
+		infos = []*domain.PostDeliveryInfo{}
+	}
+	return infos, rows.Err()
+}
+
+func (r *PostDeliveryRepository) ListByPostPaginated(ctx context.Context, postID, cursor string, limit int) ([]*domain.PostDeliveryInfo, error) {
+	args := []interface{}{postID}
+	query := `SELECT d.id, s.email, d.opened FROM post_delivery d JOIN subscription s ON s.id = d.subscription_id WHERE d.post_id = $1`
+	idx := 2
+	if cursor != "" {
+		query += fmt.Sprintf(" AND d.id > $%d", idx)
+		args = append(args, cursor)
+		idx++
+	}
+	query += fmt.Sprintf(" ORDER BY d.id LIMIT $%d", idx)
+	args = append(args, limit)
+
+	rows, err := r.DB.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var infos []*domain.PostDeliveryInfo
+	for rows.Next() {
+		var info domain.PostDeliveryInfo
+		if err := rows.Scan(&info.ID, &info.Email, &info.Opened); err != nil {
 			return nil, err
 		}
 		infos = append(infos, &info)

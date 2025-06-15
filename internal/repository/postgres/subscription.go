@@ -3,6 +3,8 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"fmt"
+
 	"newsletter-go/domain"
 )
 
@@ -41,28 +43,26 @@ func (r *SubscriptionRepository) DeleteByToken(ctx context.Context, token string
 	return err
 }
 
-func (r *SubscriptionRepository) ListByNewsletter(ctx context.Context, newsletterID, cursor string, limit int) ([]*domain.Subscription, error) {
-	var rows *sql.Rows
-	var err error
-	if cursor == "" {
-		rows, err = r.DB.QueryContext(ctx,
-			`SELECT id, newsletter_id, email, token, confirmed_at, created_at
+func (r *SubscriptionRepository) ListByNewsletter(ctx context.Context, newsletterID, cursor string, limit int, search string) ([]*domain.Subscription, error) {
+	args := []interface{}{newsletterID}
+	query := `SELECT id, newsletter_id, email, token, confirmed_at, created_at
                         FROM subscription
-                        WHERE newsletter_id = $1 AND confirmed_at IS NOT NULL
-                        ORDER BY created_at DESC
-                        LIMIT $2`,
-			newsletterID, limit,
-		)
-	} else {
-		rows, err = r.DB.QueryContext(ctx,
-			`SELECT id, newsletter_id, email, token, confirmed_at, created_at
-                        FROM subscription
-                        WHERE newsletter_id = $1 AND confirmed_at IS NOT NULL AND created_at < $2
-                        ORDER BY created_at DESC
-                        LIMIT $3`,
-			newsletterID, cursor, limit,
-		)
+                        WHERE newsletter_id = $1 AND confirmed_at IS NOT NULL`
+	idx := 2
+	if cursor != "" {
+		query += fmt.Sprintf(" AND created_at < $%d", idx)
+		args = append(args, cursor)
+		idx++
 	}
+	if search != "" {
+		query += fmt.Sprintf(" AND email ILIKE '%%' || $%d || '%%'", idx)
+		args = append(args, search)
+		idx++
+	}
+	query += fmt.Sprintf(" ORDER BY created_at DESC LIMIT $%d", idx)
+	args = append(args, limit)
+
+	rows, err := r.DB.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}

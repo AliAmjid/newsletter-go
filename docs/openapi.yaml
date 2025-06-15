@@ -162,6 +162,9 @@ components:
     PostDeliveryInfo:
       type: object
       properties:
+        id:
+          type: string
+          format: uuid
         email:
           type: string
           format: email
@@ -465,6 +468,12 @@ paths:
           schema:
             type: integer
           description: max number of posts to return
+        - in: query
+          name: search
+          required: false
+          schema:
+            type: string
+          description: search posts by title
       responses:
         "200":
           description: Page of posts
@@ -567,10 +576,6 @@ paths:
                     type: integer
                   totalOpened:
                     type: integer
-                  deliveries:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/PostDeliveryInfo"
   /post-deliveries/{deliveryId}/pixel:
     get:
       tags:
@@ -590,7 +595,47 @@ paths:
             image/png:
               schema:
                 type: string
-                format: binary
+              format: binary
+  /posts/{postId}/deliveries:
+    get:
+      tags:
+        - Posts
+      summary: List deliveries for a post
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: postId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: cursor
+          required: false
+          schema:
+            type: string
+          description: return results after this delivery ID
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+          description: max number of deliveries to return
+      responses:
+        "200":
+          description: Page of deliveries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deliveries:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/PostDeliveryInfo"
+                  nextCursor:
+                    type: string
   /newsletters/{newsletterId}/subscribers:
     get:
       tags:
@@ -618,6 +663,12 @@ paths:
           schema:
             type: integer
           description: max number of subscribers to return
+        - in: query
+          name: search
+          required: false
+          schema:
+            type: string
+          description: search subscribers by email
       responses:
         "200":
           description: Page of subscribers

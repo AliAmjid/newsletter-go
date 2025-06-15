@@ -108,6 +108,7 @@ func (h *SubscriberHandler) listSubscribers(w http.ResponseWriter, r *http.Reque
 	newsletterID := chi.URLParam(r, "newsletterId")
 	cursor := r.URL.Query().Get("cursor")
 	limitStr := r.URL.Query().Get("limit")
+	search := r.URL.Query().Get("search")
 	limit := 20
 	if limitStr != "" {
 		if v, err := strconv.Atoi(limitStr); err == nil && v > 0 {
@@ -115,7 +116,7 @@ func (h *SubscriberHandler) listSubscribers(w http.ResponseWriter, r *http.Reque
 		}
 	}
 
-	subs, next, err := h.service.List(r.Context(), newsletterID, cursor, limit)
+	subs, next, err := h.service.List(r.Context(), newsletterID, cursor, limit, search)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "failed to list subscribers")
 		return

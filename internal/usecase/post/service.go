@@ -143,8 +143,8 @@ func (s *Service) IsNewsletterOwner(ctx context.Context, newsletterId, userId st
 	return s.newsletterRepo.IsOwner(ctx, newsletterId, userId)
 }
 
-func (s *Service) List(ctx context.Context, newsletterId, cursor string, limit int) ([]*domain.Post, string, error) {
-	posts, err := s.repo.ListByNewsletter(ctx, newsletterId, cursor, limit)
+func (s *Service) List(ctx context.Context, newsletterId, cursor string, limit int, search string) ([]*domain.Post, string, error) {
+	posts, err := s.repo.ListByNewsletter(ctx, newsletterId, cursor, limit, search)
 	if err != nil {
 		return nil, "", err
 	}
@@ -153,4 +153,32 @@ func (s *Service) List(ctx context.Context, newsletterId, cursor string, limit i
 		next = posts[len(posts)-1].PublishedAt.Format(time.RFC3339)
 	}
 	return posts, next, nil
+}
+
+func (s *Service) ListDeliveries(ctx context.Context, userID, postID, cursor string, limit int) ([]*domain.PostDeliveryInfo, string, error) {
+	post, err := s.repo.GetByID(ctx, postID)
+	if err != nil {
+		return nil, "", err
+	}
+	if post == nil {
+		return nil, "", ErrNotFound
+	}
+	ok, err := s.newsletterRepo.IsOwner(ctx, post.NewsletterId, userID)
+	if err != nil {
+		return nil, "", err
+	}
+	if !ok {
+		return nil, "", ErrNotOwner
+	}
+
+	infos, err := s.deliveryRepo.ListByPostPaginated(ctx, postID, cursor, limit)
+	if err != nil {
+		return nil, "", err
+	}
+
+	next := ""
+	if len(infos) == limit {
+		next = infos[len(infos)-1].ID
+	}
+	return infos, next, nil
 }

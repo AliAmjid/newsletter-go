@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"newsletter-go/domain"
 )
@@ -48,28 +49,26 @@ func (p *PostRepository) Publish(ctx context.Context, id string) (*domain.Post, 
 	}
 	return &post, nil
 }
-func (p *PostRepository) ListByNewsletter(ctx context.Context, newsletterId, cursor string, limit int) ([]*domain.Post, error) {
-	var rows *sql.Rows
-	var err error
-	if cursor == "" {
-		rows, err = p.DB.QueryContext(ctx,
-			`SELECT id, newsletter_id, title, content, published_at
-                         FROM post
-                         WHERE newsletter_id = $1 AND published_at IS NOT NULL
-                         ORDER BY published_at DESC
-                         LIMIT $2`,
-			newsletterId, limit,
-		)
-	} else {
-		rows, err = p.DB.QueryContext(ctx,
-			`SELECT id, newsletter_id, title, content, published_at
-                         FROM post
-                         WHERE newsletter_id = $1 AND published_at IS NOT NULL AND published_at < $2
-                         ORDER BY published_at DESC
-                         LIMIT $3`,
-			newsletterId, cursor, limit,
-		)
+func (p *PostRepository) ListByNewsletter(ctx context.Context, newsletterId, cursor string, limit int, search string) ([]*domain.Post, error) {
+	args := []interface{}{newsletterId}
+	query := `SELECT id, newsletter_id, title, content, published_at
+              FROM post
+              WHERE newsletter_id = $1 AND published_at IS NOT NULL`
+	idx := 2
+	if cursor != "" {
+		query += fmt.Sprintf(" AND published_at < $%d", idx)
+		args = append(args, cursor)
+		idx++
 	}
+	if search != "" {
+		query += fmt.Sprintf(" AND title ILIKE '%%' || $%d || '%%'", idx)
+		args = append(args, search)
+		idx++
+	}
+	query += fmt.Sprintf(" ORDER BY published_at DESC LIMIT $%d", idx)
+	args = append(args, limit)
+
+	rows, err := p.DB.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -84,12 +83,10 @@ func (p *PostRepository) ListByNewsletter(ctx context.Context, newsletterId, cur
 		posts = append(posts, post)
 	}
 
-	// Check for any errors encountered during iteration
 	if err := rows.Err(); err != nil {
 		return []*domain.Post{}, err
 	}
 
-	// If no posts were found, return an empty slice
 	if posts == nil {
 		posts = []*domain.Post{}
 	}

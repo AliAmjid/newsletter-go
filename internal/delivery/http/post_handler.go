@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
@@ -41,10 +40,9 @@ type PaginatedPostResponse struct {
 }
 
 type SinglePostResponse struct {
-	Post        *domain.Post               `json:"post"`
-	TotalSend   int                        `json:"totalSend"`
-	TotalOpened int                        `json:"totalOpened"`
-	Deliveries  []*domain.PostDeliveryInfo `json:"deliveries"`
+	Post        *domain.Post `json:"post"`
+	TotalSend   int          `json:"totalSend"`
+	TotalOpened int          `json:"totalOpened"`
 }
 
 func NewPostHandler(r chi.Router, s *postusecase.Service, u *userusecase.Service) {
@@ -60,6 +58,7 @@ func NewPostHandler(r chi.Router, s *postusecase.Service, u *userusecase.Service
 		r.Post("/{postId}/publish", h.publishPost)
 		r.Get("/{postId}", h.getPost)
 	})
+	r.Get("/posts/{postId}/deliveries", h.listDeliveries)
 	r.Get("/post-deliveries/{deliveryId}/pixel", h.pixel)
 }
 
@@ -82,17 +81,10 @@ func (h *PostHandler) createPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var publishedAt *time.Time
-	if req.PublishImmediately {
-		t := time.Now()
-		publishedAt = &t
-	}
-
 	p := &domain.Post{
 		NewsletterId: newsletterId,
 		Title:        req.Title,
 		Content:      req.Content,
-		PublishedAt:  publishedAt,
 	}
 	if err := h.service.Create(r.Context(), user.ID, p); err != nil {
 		if errors.Is(err, postusecase.ErrNotOwner) {
@@ -102,6 +94,14 @@ func (h *PostHandler) createPost(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("%+v\n", err)
 		respondWithError(w, http.StatusInternalServerError, "Failed to save post")
 		return
+	}
+	if req.PublishImmediately {
+		pub, err := h.service.Publish(r.Context(), user.ID, p.ID)
+		if err != nil {
+			fmt.Printf("%+v\n", err)
+		} else {
+			p = pub
+		}
 	}
 	respondWithJSON(w, http.StatusCreated, p)
 }
@@ -127,6 +127,7 @@ func (h *PostHandler) listPosts(w http.ResponseWriter, r *http.Request) {
 
 	cursor := r.URL.Query().Get("cursor")
 	limitStr := r.URL.Query().Get("limit")
+	search := r.URL.Query().Get("search")
 	limit := 20
 	if limitStr != "" {
 		if v, err := strconv.Atoi(limitStr); err == nil && v > 0 {
@@ -134,7 +135,7 @@ func (h *PostHandler) listPosts(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	posts, next, err := h.service.List(r.Context(), newsletterId, cursor, limit)
+	posts, next, err := h.service.List(r.Context(), newsletterId, cursor, limit, search)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to list posts")
 		return
@@ -220,7 +221,49 @@ func (h *PostHandler) getPost(w http.ResponseWriter, r *http.Request) {
 		Post:        p,
 		TotalSend:   m.TotalSend,
 		TotalOpened: m.TotalOpened,
-		Deliveries:  m.Deliveries,
 	}
 	respondWithJSON(w, http.StatusOK, result)
+}
+
+func (h *PostHandler) listDeliveries(w http.ResponseWriter, r *http.Request) {
+	user, err := h.users.IsLoggedIn(r)
+	if err != nil || user == nil {
+		respondWithError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+	if ok, err := h.users.IsAllowedTo(r, "read", "post"); err != nil || !ok {
+		respondWithError(w, http.StatusForbidden, "forbidden")
+		return
+	}
+
+	postID := chi.URLParam(r, "postId")
+	cursor := r.URL.Query().Get("cursor")
+	limitStr := r.URL.Query().Get("limit")
+	limit := 20
+	if limitStr != "" {
+		if v, err := strconv.Atoi(limitStr); err == nil && v > 0 {
+			limit = v
+		}
+	}
+
+	deliveries, next, err := h.service.ListDeliveries(r.Context(), user.ID, postID, cursor, limit)
+	if err != nil {
+		if errors.Is(err, postusecase.ErrNotOwner) {
+			respondWithError(w, http.StatusForbidden, err.Error())
+			return
+		}
+		if errors.Is(err, postusecase.ErrNotFound) {
+			respondWithError(w, http.StatusNotFound, err.Error())
+			return
+		}
+		respondWithError(w, http.StatusInternalServerError, "failed to list deliveries")
+		return
+	}
+
+	type deliveriesResponse struct {
+		Deliveries []*domain.PostDeliveryInfo `json:"deliveries"`
+		NextCursor string                     `json:"nextCursor"`
+	}
+
+	respondWithJSON(w, http.StatusOK, deliveriesResponse{Deliveries: deliveries, NextCursor: next})
 }
