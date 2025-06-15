@@ -3,6 +3,7 @@
 ### Diagram
 
 ![img.png](docs/img.png)
+
 ## Project Structure
 
 The source code follows a simplified version of the [go-clean-arch](https://github.com/bxcodec/go-clean-arch) layout:
@@ -62,6 +63,14 @@ This project uses [dotenvx](https://dotenvx.com/) for secure environment variabl
 For more information, visit [dotenvx documentation](https://dotenvx.com/docs/).
 
 ## Database migrations
-DB migration files are stored in `db/migrations` folder. To apply migrations call following command:
+DB migration files are stored in `db/migrations` folder. To apply migrations call the following command:
 
+```bash
 goose postgres "postgres://postgres:mysecretpassword@localhost:5432/postgres?sslmode=disable" up
+```
+
+To create a new migration:
+
+```bash
+goose create add_new_table sql
+```
