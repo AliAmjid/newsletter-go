@@ -11,7 +11,6 @@ RUN apk add --no-cache ca-certificates
 WORKDIR /app
 COPY --from=build /app/newsletter .
 COPY --from=build /app/internal/mailer/templates /app/internal/mailer/templates
-COPY .env .env
 EXPOSE 3000
 
 CMD ["./newsletter"]
