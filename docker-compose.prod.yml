@@ -7,6 +7,10 @@ services:
       POSTGRES_DB: postgres
     networks:
       - newsletter-go-network
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
   app-prod:
     image: 590183723398.dkr.ecr.eu-central-1.amazonaws.com/newsletter-go:latest
@@ -22,3 +26,5 @@ networks:
   newsletter-go-network:
     driver: bridge
 
+volumes:
+  postgres_data:

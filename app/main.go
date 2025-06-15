@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
@@ -27,15 +26,15 @@ func main() {
 	delivery.NewAuthHandler(r, c.AuthService, c.UserService)
 	delivery.NewNewsletterHandler(r, c.NewsletterService, c.UserService)
 
-	delivery.NewSubscriberHandler(r, c.SubscriberService)
+	delivery.NewSubscriberHandler(r, c.SubscriberService, c.UserService)
 
-	fmt.Println("Server starting on port 3000")
+	log.Println("Server starting on port 3000")
 	server := &http.Server{
 		Addr:    ":3000",
 		Handler: r,
 	}
 
 	if err := server.ListenAndServe(); err != nil {
-		fmt.Println("failed to listen to server", err)
+		log.Printf("failed to listen to server: %v", err)
 	}
 }

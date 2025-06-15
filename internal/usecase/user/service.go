@@ -22,9 +22,21 @@ type Service struct {
 	authClient *auth.Client
 }
 
+var (
+	ErrMissingAuthHeader = errors.New("missing authorization header")
+	ErrEmptyToken        = errors.New("empty token")
+	ErrInvalidToken      = errors.New("invalid token")
+)
+
 func NewService(r domain.UserRepository, permitKey, creds string) *Service {
 	cfg := config.NewConfigBuilder(permitKey).WithPdpUrl("https://cloudpdp.api.permit.io").Build()
-	app, err := firebase.NewApp(context.Background(), nil, option.WithCredentialsFile(creds))
+	var app *firebase.App
+	var err error
+	if len(creds) > 0 && creds[0] == '{' {
+		app, err = firebase.NewApp(context.Background(), nil, option.WithCredentialsJSON([]byte(creds)))
+	} else {
+		app, err = firebase.NewApp(context.Background(), nil, option.WithCredentialsFile(creds))
+	}
 	if err != nil {
 		panic(err)
 	}
@@ -38,12 +50,12 @@ func NewService(r domain.UserRepository, permitKey, creds string) *Service {
 func (s *Service) tokenFromRequest(r *http.Request) (string, error) {
 	auth := r.Header.Get("Authorization")
 	if auth == "" {
-		return "", errors.New("missing authorization header")
+		return "", ErrMissingAuthHeader
 	}
 
 	token := strings.TrimSpace(strings.TrimPrefix(auth, "Bearer"))
 	if token == "" {
-		return "", errors.New("empty token")
+		return "", ErrEmptyToken
 	}
 
 	return token, nil
@@ -52,7 +64,7 @@ func (s *Service) tokenFromRequest(r *http.Request) (string, error) {
 func (s *Service) parseToken(ctx context.Context, tokenStr string) (string, error) {
 	t, err := s.authClient.VerifyIDToken(ctx, tokenStr)
 	if err != nil {
-		return "", err
+		return "", ErrInvalidToken
 	}
 	return t.UID, nil
 }

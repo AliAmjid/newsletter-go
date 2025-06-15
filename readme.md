@@ -62,6 +62,17 @@ This project uses [dotenvx](https://dotenvx.com/) for secure environment variabl
 For more information, visit [dotenvx documentation](https://dotenvx.com/docs/).
 
 ## Database migrations
-DB migration files are stored in `db/migrations` folder. To apply migrations call following command:
+DB migration files are stored in `db/migrations` folder. To apply migrations call the following command:
 
+```bash
 goose postgres "postgres://postgres:mysecretpassword@localhost:5432/postgres?sslmode=disable" up
+
+## Documentation of implementation
+[Go to documentation](./docs/implementation/readme.md)
+```
+
+To create a new migration:
+
+```bash
+goose create add_new_table sql
+```

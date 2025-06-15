@@ -11,3 +11,5 @@ tmp/
 node_modules/
 
 .terraform/
+
+./serviceAccount.json

@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"github.com/mailgun/mailgun-go/v4"
+
+	"newsletter-go/domain"
 )
 
 type Service struct {
@@ -83,4 +85,37 @@ func (s *Service) SendForgotPasswordEmail(to, token string) error {
 		return err
 	}
 	return s.send(to, "Password Reset", body)
+}
+
+type SubscriptionData struct {
+	Token string
+}
+
+func (s *Service) SendSubscriptionConfirmEmail(to, token string) error {
+	body, err := s.render("subscription_confirm.html", SubscriptionData{Token: token})
+	if err != nil {
+		return err
+	}
+	return s.send(to, "Confirm Subscription", body)
+}
+
+type PostEmailData struct {
+	Title      string
+	Content    template.HTML
+	PixelURL   string
+	UnsubToken string
+}
+
+func (s *Service) SendPostEmail(to, token string, p *domain.Post, deliveryID string) error {
+	data := PostEmailData{
+		Title:      p.Title,
+		Content:    template.HTML(p.Content),
+		PixelURL:   fmt.Sprintf("http://localhost:3000/post-deliveries/%s/pixel", deliveryID),
+		UnsubToken: token,
+	}
+	body, err := s.render("post.html", data)
+	if err != nil {
+		return err
+	}
+	return s.send(to, p.Title, body)
 }

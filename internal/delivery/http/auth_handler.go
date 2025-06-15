@@ -37,6 +37,11 @@ type authRequest struct {
 	Password string `json:"password" validate:"required,min=6"`
 }
 
+type whoamiResponse struct {
+	ID    string `json:"id"`
+	Email string `json:"email"`
+}
+
 type passwordResetRequest struct {
 	Email string `json:"email" validate:"required,email"`
 }
@@ -70,7 +75,11 @@ func (h *AuthHandler) login(w http.ResponseWriter, r *http.Request) {
 	}
 	access, refresh, err := h.service.Login(r.Context(), req.Email, req.Password)
 	if err != nil {
-		respondWithError(w, http.StatusUnauthorized, "unauthorized")
+		if err == authusecase.ErrInvalidCredentials {
+			respondWithError(w, http.StatusUnauthorized, err.Error())
+		} else {
+			respondWithError(w, http.StatusInternalServerError, "login failed")
+		}
 		return
 	}
 	respondWithJSON(w, http.StatusOK, map[string]string{"accessToken": access, "refreshToken": refresh})
@@ -83,7 +92,11 @@ func (h *AuthHandler) refresh(w http.ResponseWriter, r *http.Request) {
 	}
 	access, err := h.service.Refresh(r.Context(), req.RefreshToken)
 	if err != nil {
-		respondWithError(w, http.StatusUnauthorized, err.Error())
+		if err == authusecase.ErrInvalidToken {
+			respondWithError(w, http.StatusUnauthorized, err.Error())
+		} else {
+			respondWithError(w, http.StatusInternalServerError, "failed to refresh token")
+		}
 		return
 	}
 	respondWithJSON(w, http.StatusOK, map[string]string{"accessToken": access})
@@ -95,7 +108,11 @@ func (h *AuthHandler) requestReset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.service.RequestPasswordReset(r.Context(), req.Email); err != nil {
-		respondWithError(w, http.StatusBadRequest, err.Error())
+		if err == authusecase.ErrUserNotFound {
+			respondWithError(w, http.StatusBadRequest, err.Error())
+		} else {
+			respondWithError(w, http.StatusInternalServerError, "failed to request reset")
+		}
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -107,7 +124,14 @@ func (h *AuthHandler) confirmReset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.service.ConfirmPasswordReset(r.Context(), req.Token, req.NewPassword); err != nil {
-		respondWithError(w, http.StatusBadRequest, err.Error())
+		switch err {
+		case authusecase.ErrInvalidToken:
+			respondWithError(w, http.StatusBadRequest, err.Error())
+		case authusecase.ErrTokenExpired:
+			respondWithError(w, http.StatusBadRequest, err.Error())
+		default:
+			respondWithError(w, http.StatusInternalServerError, "failed to reset password")
+		}
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -119,5 +143,9 @@ func (h *AuthHandler) whoAmI(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusUnauthorized, err.Error())
 		return
 	}
-	respondWithJSON(w, http.StatusOK, map[string]string{"id": u.ID, "email": u.Email})
+
+	respondWithJSON(w, http.StatusOK, whoamiResponse{
+		ID:    u.ID,
+		Email: u.Email,
+	})
 }
