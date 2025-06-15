@@ -14,6 +14,7 @@ services:
 
   migrations:
     image: 590183723398.dkr.ecr.eu-central-1.amazonaws.com/newsletter-go:latest
+    entrypoint: []
     command: goose -dir db/migrations postgres "postgres://postgres:mysecretpassword@db:5432/postgres?sslmode=disable" up
     depends_on:
       - db
