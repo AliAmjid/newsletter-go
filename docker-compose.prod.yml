@@ -5,20 +5,34 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: mysecretpassword
       POSTGRES_DB: postgres
-    networks:
-      - newsletter-go-network
+<<<<<<< HEAD
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+=======
+    networks:
+      - newsletter-go-network
+>>>>>>> 72c9e15 (ci: fix)
 
   app-prod:
     image: 590183723398.dkr.ecr.eu-central-1.amazonaws.com/newsletter-go:latest
     depends_on:
       - db
+<<<<<<< HEAD
+    env_file:
+      - .env
+=======
     env_file: .env
+>>>>>>> 72c9e15 (ci: fix)
     ports:
       - "3000:3000"
+    networks:
+      - newsletter-go-network
+
+networks:
+  newsletter-go-network:
+    driver: bridge
     networks:
       - newsletter-go-network
 
