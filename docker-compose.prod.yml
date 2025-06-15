@@ -14,15 +14,11 @@ services:
 
   migrations:
     image: 590183723398.dkr.ecr.eu-central-1.amazonaws.com/newsletter-go:latest
-    command: sh -c "go install github.com/pressly/goose/v3/cmd/goose@latest && goose -dir db/migrations postgres \"postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable\" up"
+    command: goose -dir db/migrations postgres "postgres://postgres:mysecretpassword@db:5432/postgres?sslmode=disable" up
     depends_on:
       - db
-    env_file:
-      - .env
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: mysecretpassword
-      POSTGRES_DB: postgres
+    networks:
+      - newsletter-go-network
 
   app-prod:
     image: 590183723398.dkr.ecr.eu-central-1.amazonaws.com/newsletter-go:latest
