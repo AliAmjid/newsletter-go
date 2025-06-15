@@ -1,6 +1,7 @@
 package http
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -42,8 +43,8 @@ type newsletterUpdateRequest struct {
 
 func (h *NewsletterHandler) listNewsletters(w http.ResponseWriter, r *http.Request) {
 	user, err := h.users.IsLoggedIn(r)
-	if err != nil || user == nil {
-		respondWithError(w, http.StatusUnauthorized, err.Error())
+	if user == nil {
+		respondWithError(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 	if ok, err := h.users.IsAllowedTo(r, "read", "newsletter"); err != nil || !ok {
@@ -62,7 +63,7 @@ func (h *NewsletterHandler) listNewsletters(w http.ResponseWriter, r *http.Reque
 func (h *NewsletterHandler) createNewsletter(w http.ResponseWriter, r *http.Request) {
 	user, err := h.users.IsLoggedIn(r)
 	if err != nil || user == nil {
-		respondWithError(w, http.StatusUnauthorized, err.Error())
+		respondWithError(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 	if ok, err := h.users.IsAllowedTo(r, "create", "newsletter"); err != nil || !ok {
@@ -86,7 +87,7 @@ func (h *NewsletterHandler) createNewsletter(w http.ResponseWriter, r *http.Requ
 func (h *NewsletterHandler) getNewsletter(w http.ResponseWriter, r *http.Request) {
 	user, err := h.users.IsLoggedIn(r)
 	if err != nil || user == nil {
-		respondWithError(w, http.StatusUnauthorized, err.Error())
+		respondWithError(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 
@@ -98,8 +99,8 @@ func (h *NewsletterHandler) getNewsletter(w http.ResponseWriter, r *http.Request
 	id := chi.URLParam(r, "newsletterId")
 	n, err := h.service.GetByID(r.Context(), id)
 	if err != nil {
-		if err == newsletterusecase.ErrNotFound {
-			respondWithError(w, http.StatusNotFound, "not found")
+		if errors.Is(err, newsletterusecase.ErrNotFound) {
+			respondWithError(w, http.StatusNotFound, "not found - no newsletter with this ID")
 		} else {
 			respondWithError(w, http.StatusInternalServerError, "failed to fetch newsletter")
 		}
@@ -117,7 +118,7 @@ func (h *NewsletterHandler) getNewsletter(w http.ResponseWriter, r *http.Request
 func (h *NewsletterHandler) updateNewsletter(w http.ResponseWriter, r *http.Request) {
 	user, err := h.users.IsLoggedIn(r)
 	if err != nil || user == nil {
-		respondWithError(w, http.StatusUnauthorized, err.Error())
+		respondWithError(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 	if ok, err := h.users.IsAllowedTo(r, "update", "newsletter"); err != nil || !ok {
@@ -161,7 +162,7 @@ func (h *NewsletterHandler) updateNewsletter(w http.ResponseWriter, r *http.Requ
 func (h *NewsletterHandler) deleteNewsletter(w http.ResponseWriter, r *http.Request) {
 	user, err := h.users.IsLoggedIn(r)
 	if err != nil || user == nil {
-		respondWithError(w, http.StatusUnauthorized, err.Error())
+		respondWithError(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 	if ok, err := h.users.IsAllowedTo(r, "delete", "newsletter"); err != nil || !ok {

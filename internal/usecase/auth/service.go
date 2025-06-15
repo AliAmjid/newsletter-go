@@ -47,7 +47,15 @@ type signUpResponse struct {
 
 func NewService(r domain.UserRepository, rr domain.PasswordResetRepository, permitKey, creds string, firebaseKey string, m *mailer.Service) *Service {
 	cfg := config.NewConfigBuilder(permitKey).WithPdpUrl("https://cloudpdp.api.permit.io").Build()
-	app, err := firebase.NewApp(context.Background(), nil, option.WithCredentialsFile(creds))
+
+	// Pokud creds vypadá jako cesta k souboru, načti soubor, jinak použij JSON string
+	var app *firebase.App
+	var err error
+	if len(creds) > 0 && creds[0] == '{' {
+		app, err = firebase.NewApp(context.Background(), nil, option.WithCredentialsJSON([]byte(creds)))
+	} else {
+		app, err = firebase.NewApp(context.Background(), nil, option.WithCredentialsFile(creds))
+	}
 	if err != nil {
 		panic(err)
 	}

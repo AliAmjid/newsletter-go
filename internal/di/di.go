@@ -35,7 +35,7 @@ func NewContainer() *Container {
 	userRepo := postgres.NewUserRepository(db.DB)
 	resetRepo := postgres.NewPasswordResetRepository(db.DB)
 	authApiKey := os.Getenv("PERMIT_API_KEY")
-	fbCreds := os.Getenv("FIREBASE_CREDENTIALS")
+	fbCreds := os.Getenv("SERVICES_ACCOUNT_JSON")
 	fbKey := os.Getenv("FIREBASE_API_KEY")
 	mgDomain := os.Getenv("MAILGUN_DOMAIN")
 	mgKey := os.Getenv("MAILGUN_API_KEY")
@@ -45,7 +45,7 @@ func NewContainer() *Container {
 		panic(err)
 	}
 	authService := authusecase.NewService(userRepo, resetRepo, authApiKey, fbCreds, fbKey, mailerSvc)
-	userService := userusecase.NewService(userRepo, authApiKey, fbCreds)
+	userService := userusecase.NewService(userRepo, authApiKey, fbCreds) // zde fbCreds je JSON, ne cesta k souboru
 
 	subscriberRepo := postgres.NewSubscriptionRepository(db.DB)
 	subscriberService := subscriberusecase.NewService(subscriberRepo, mailerSvc)
