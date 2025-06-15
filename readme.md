@@ -65,3 +65,6 @@ For more information, visit [dotenvx documentation](https://dotenvx.com/docs/).
 DB migration files are stored in `db/migrations` folder. To apply migrations call following command:
 
 goose postgres "postgres://postgres:mysecretpassword@localhost:5432/postgres?sslmode=disable" up
+
+## Documentation of implementation
+[Go to documentation](./docs/implementation/readme.md)
