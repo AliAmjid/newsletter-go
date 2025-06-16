@@ -1,5 +1,23 @@
 # Newsletter application
 
+This repository contains a **Newsletter service** developed as a **semester project** for university coursework.
+
+The main goal of the project is to design and implement a backend service for managing email newsletters, including user authentication, subscription handling, post publishing, and delivery tracking.
+
+The application is written in **Go**, follows principles of **clean architecture**, and integrates with external services such as **Firebase Authentication**, **Permit.io**, and **Mailgun**.
+
+Technologies used include PostgreSQL, goose for database migrations, and go-chi/chi for routing.
+
+More details about the architecture, project structure, database schema, and dependencies are provided below.
+
+### Authors
+
+- **Adam Šindler** – `sina07@vse.cz` – GitHub: [@sina07288](https://github.com/sina07288)
+- **Ali Husnain Amjid** – `amja00@vse.cz` – GitHub: [@AliAmjid](https://github.com/AliAmjid)
+- **Jakub David** – `davj05@vse.cz` – GitHub: [@KubaDavid](https://github.com/KubaDavid)
+- **Vojtěch Nerad** – `nerv01@vse.cz` – GitHub: [@vojtechnerad](https://github.com/vojtechnerad)
+
+
 ## Table of Contents
 - [Diagram](#diagram)
 - [Project Structure](#project-structure)
