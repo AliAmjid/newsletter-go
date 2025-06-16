@@ -22,7 +22,7 @@ type SubscriberHandler struct {
 func NewSubscriberHandler(r chi.Router, s *subscriberusecase.Service, u *userusecase.Service) {
 	h := &SubscriberHandler{service: s, users: u, validate: validator.New()}
 
-	r.Route("/newsletters/{newsletterId}", func(r chi.Router) {
+	r.Route("/subscriptions/{newsletterId}", func(r chi.Router) {
 		r.Post("/subscribe", h.subscribe)
 		r.Get("/subscribers", h.listSubscribers)
 	})
