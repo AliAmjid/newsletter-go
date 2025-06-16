@@ -17,6 +17,7 @@ More details about the architecture, project structure, database schema, and dep
 - **Jakub David** – `davj05@vse.cz` – GitHub: [@KubaDavid](https://github.com/KubaDavid)
 - **Vojtěch Nerad** – `nerv01@vse.cz` – GitHub: [@vojtechnerad](https://github.com/vojtechnerad)
 
+dev URL: http://18.184.186.12:3000
 
 ## Table of Contents
 - [Diagram](#diagram)
