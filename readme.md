@@ -191,3 +191,17 @@ goose create add_new_table sql
 ```
 This will generate a new pair of .sql files (up and down) in the db/migrations directory.
 For more information, refer to the goose documentation.
+
+
+## Used GO packages
+- [joho/godotenv](https://github.com/joho/godotenv)  
+  Used to load environment variables from a `.env` file into the application at runtime.  
+  This helps manage configuration in a clean and secure way during local development.
+
+- [go-chi/chi](https://github.com/go-chi/chi)  
+  A lightweight, idiomatic, and composable router for building HTTP services in Go.  
+  We use it to define our API routes and middleware in a modular and efficient way.
+
+- [lib/pq](https://github.com/lib/pq) and `database/sql`  
+  `lib/pq` is a pure Go Postgres driver used together with the standard `database/sql` package  
+  to handle database connections, queries, and transactions with PostgreSQL.
