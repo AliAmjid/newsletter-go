@@ -636,7 +636,7 @@ paths:
                       $ref: "#/components/schemas/PostDeliveryInfo"
                   nextCursor:
                     type: string
-  /newsletters/{newsletterId}/subscribers:
+  /subscriptions/{newsletterId}/subscribers:
     get:
       tags:
         - Subscribers
@@ -684,7 +684,7 @@ paths:
                   nextCursor:
                     type: string
                     format: date-time
-  /newsletters/{newsletterId}/subscribe:
+  /subscriptions/{newsletterId}/subscribe:
     post:
       tags:
         - Subscriptions
