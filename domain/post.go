@@ -17,5 +17,5 @@ type PostRepository interface {
 	Create(ctx context.Context, p *Post) error
 	GetByID(ctx context.Context, id string) (*Post, error)
 	Publish(ctx context.Context, id string) (*Post, error)
-	ListByNewsletter(ctx context.Context, newsletterId, cursor string, limit int, search string) ([]*Post, error)
+	ListByNewsletter(ctx context.Context, newsletterId, cursor string, limit int, search string, published *bool) ([]*Post, error)
 }

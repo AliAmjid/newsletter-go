@@ -24,6 +24,7 @@ POSTGRES_CONNECTION_STRING=<db-url>
 PERMIT_API_KEY=<permit-key>
 FIREBASE_CREDENTIALS=<path-to-service-account>
 FIREBASE_API_KEY=<web-api-key>
+APP_DOMAIN=<app-domain>
 MAILGUN_DOMAIN=<mg-domain>
 MAILGUN_API_KEY=<mg-key>
 MAILGUN_FROM_EMAIL=<from-email>

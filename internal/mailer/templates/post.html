@@ -8,6 +8,6 @@
     <h1>{{.Title}}</h1>
     <div>{{.Content}}</div>
     <img src="{{.PixelURL}}" alt="" width="1" height="1" style="display:none;"/>
-    <p><a href="http://localhost:3000/subscriptions/unsubscribe?token={{.UnsubToken}}">Unsubscribe</a></p>
+    <p><a href="{{.BaseURL}}/subscriptions/unsubscribe?token={{.UnsubToken}}">Unsubscribe</a></p>
 </body>
 </html>

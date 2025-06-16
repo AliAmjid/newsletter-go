@@ -458,7 +458,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/newsletters/{{newsletterId}}/posts",
+              "raw": "{{base_url}}/newsletters/{{newsletterId}}/posts?cursor={{cursor}}&limit={{limit}}&search={{search}}",
               "host": [
                 "{{base_url}}"
               ],
@@ -466,6 +466,11 @@
                 "newsletters",
                 "{{newsletterId}}",
                 "posts"
+              ],
+              "query": [
+                { "key": "cursor", "value": "{{cursor}}" },
+                { "key": "limit", "value": "{{limit}}" },
+                { "key": "search", "value": "{{search}}" }
               ]
             }
           },
@@ -575,11 +580,13 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/posts/{{postId}}",
+              "raw": "{{base_url}}/newsletters/{{newsletterId}}/posts/{{postId}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
+                "newsletters",
+                "{{newsletterId}}",
                 "posts",
                 "{{postId}}"
               ]
@@ -614,7 +621,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/posts/{{postId}}/deliveries",
+              "raw": "{{base_url}}/posts/{{postId}}/deliveries?cursor={{cursor}}&limit={{limit}}",
               "host": [
                 "{{base_url}}"
               ],
@@ -622,6 +629,10 @@
                 "posts",
                 "{{postId}}",
                 "deliveries"
+              ],
+              "query": [
+                { "key": "cursor", "value": "{{cursor}}" },
+                { "key": "limit", "value": "{{limit}}" }
               ]
             }
           },
@@ -685,14 +696,19 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/newsletters/{{newsletterId}}/subscribers",
+              "raw": "{{base_url}}/subscriptions/{{newsletterId}}/subscribers?cursor={{cursor}}&limit={{limit}}&search={{search}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "newsletters",
+                "subscriptions",
                 "{{newsletterId}}",
                 "subscribers"
+              ],
+              "query": [
+                { "key": "cursor", "value": "{{cursor}}" },
+                { "key": "limit", "value": "{{limit}}" },
+                { "key": "search", "value": "{{search}}" }
               ]
             }
           },
@@ -730,12 +746,12 @@
               "raw": "{\n  \"email\": \"test-subscriber@example.com\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/newsletters/{{newsletterId}}/subscribe",
+              "raw": "{{base_url}}/subscriptions/{{newsletterId}}/subscribe",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
-                "newsletters",
+                "subscriptions",
                 "{{newsletterId}}",
                 "subscribe"
               ]

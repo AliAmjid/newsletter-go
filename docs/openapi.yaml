@@ -548,7 +548,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Post"
-  /posts/{postId}:
+  /newsletters/{newsletterId}/posts/{postId}:
     get:
       tags:
         - Posts
@@ -556,6 +556,12 @@ paths:
       security:
         - bearerAuth: []
       parameters:
+        - in: path
+          name: newsletterId
+          required: true
+          schema:
+            type: string
+            format: uuid
         - in: path
           name: postId
           required: true

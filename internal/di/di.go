@@ -40,7 +40,8 @@ func NewContainer() *Container {
 	mgDomain := os.Getenv("MAILGUN_DOMAIN")
 	mgKey := os.Getenv("MAILGUN_API_KEY")
 	mgFrom := os.Getenv("MAILGUN_FROM_EMAIL")
-	mailerSvc, err := mailer.NewService(mgDomain, mgKey, mgFrom)
+	appDomain := os.Getenv("APP_DOMAIN")
+	mailerSvc, err := mailer.NewService(mgDomain, mgKey, mgFrom, appDomain)
 	if err != nil {
 		panic(err)
 	}

@@ -128,6 +128,21 @@ func (h *PostHandler) listPosts(w http.ResponseWriter, r *http.Request) {
 	cursor := r.URL.Query().Get("cursor")
 	limitStr := r.URL.Query().Get("limit")
 	search := r.URL.Query().Get("search")
+	pubStr := r.URL.Query().Get("published")
+	var pubFilter *bool
+	switch pubStr {
+	case "1":
+		b := true
+		pubFilter = &b
+	case "0":
+		b := false
+		pubFilter = &b
+	case "", "null":
+		// no filter
+	default:
+		respondWithError(w, http.StatusBadRequest, "invalid published value")
+		return
+	}
 	limit := 20
 	if limitStr != "" {
 		if v, err := strconv.Atoi(limitStr); err == nil && v > 0 {
@@ -135,7 +150,7 @@ func (h *PostHandler) listPosts(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	posts, next, err := h.service.List(r.Context(), newsletterId, cursor, limit, search)
+	posts, next, err := h.service.List(r.Context(), newsletterId, cursor, limit, search, pubFilter)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to list posts")
 		return

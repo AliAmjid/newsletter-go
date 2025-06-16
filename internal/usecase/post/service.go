@@ -143,13 +143,13 @@ func (s *Service) IsNewsletterOwner(ctx context.Context, newsletterId, userId st
 	return s.newsletterRepo.IsOwner(ctx, newsletterId, userId)
 }
 
-func (s *Service) List(ctx context.Context, newsletterId, cursor string, limit int, search string) ([]*domain.Post, string, error) {
-	posts, err := s.repo.ListByNewsletter(ctx, newsletterId, cursor, limit, search)
+func (s *Service) List(ctx context.Context, newsletterId, cursor string, limit int, search string, published *bool) ([]*domain.Post, string, error) {
+	posts, err := s.repo.ListByNewsletter(ctx, newsletterId, cursor, limit, search, published)
 	if err != nil {
 		return nil, "", err
 	}
 	next := ""
-	if len(posts) == limit {
+	if len(posts) == limit && posts[len(posts)-1].PublishedAt != nil {
 		next = posts[len(posts)-1].PublishedAt.Format(time.RFC3339)
 	}
 	return posts, next, nil

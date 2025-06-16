@@ -49,23 +49,40 @@ func (p *PostRepository) Publish(ctx context.Context, id string) (*domain.Post, 
 	}
 	return &post, nil
 }
-func (p *PostRepository) ListByNewsletter(ctx context.Context, newsletterId, cursor string, limit int, search string) ([]*domain.Post, error) {
+func (p *PostRepository) ListByNewsletter(ctx context.Context, newsletterId, cursor string, limit int, search string, published *bool) ([]*domain.Post, error) {
 	args := []interface{}{newsletterId}
 	query := `SELECT id, newsletter_id, title, content, published_at
               FROM post
-              WHERE newsletter_id = $1 AND published_at IS NOT NULL`
+              WHERE newsletter_id = $1`
 	idx := 2
-	if cursor != "" {
-		query += fmt.Sprintf(" AND published_at < $%d", idx)
-		args = append(args, cursor)
-		idx++
+	if published != nil {
+		if *published {
+			query += " AND published_at IS NOT NULL"
+			if cursor != "" {
+				query += fmt.Sprintf(" AND published_at < $%d", idx)
+				args = append(args, cursor)
+				idx++
+			}
+		} else {
+			query += " AND published_at IS NULL"
+		}
+	} else {
+		if cursor != "" {
+			query += fmt.Sprintf(" AND (published_at IS NULL OR published_at < $%d)", idx)
+			args = append(args, cursor)
+			idx++
+		}
 	}
 	if search != "" {
 		query += fmt.Sprintf(" AND title ILIKE '%%' || $%d || '%%'", idx)
 		args = append(args, search)
 		idx++
 	}
-	query += fmt.Sprintf(" ORDER BY published_at DESC LIMIT $%d", idx)
+	if published != nil && *published {
+		query += fmt.Sprintf(" ORDER BY published_at DESC LIMIT $%d", idx)
+	} else {
+		query += fmt.Sprintf(" ORDER BY published_at DESC NULLS LAST LIMIT $%d", idx)
+	}
 	args = append(args, limit)
 
 	rows, err := p.DB.QueryContext(ctx, query, args...)

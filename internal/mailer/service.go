@@ -19,17 +19,18 @@ type Service struct {
 	domain    string
 	apiKey    string
 	fromEmail string
+	baseURL   string
 	templates *template.Template
 }
 
-func NewService(domain, apiKey, from string) (*Service, error) {
+func NewService(domain, apiKey, from, baseURL string) (*Service, error) {
 	_, filename, _, _ := runtime.Caller(0)
 	dir := filepath.Dir(filename)
 	tmpl, err := template.ParseGlob(filepath.Join(dir, "templates", "*.html"))
 	if err != nil {
 		return nil, err
 	}
-	return &Service{domain: domain, apiKey: apiKey, fromEmail: from, templates: tmpl}, nil
+	return &Service{domain: domain, apiKey: apiKey, fromEmail: from, baseURL: baseURL, templates: tmpl}, nil
 }
 
 func (s *Service) render(name string, data interface{}) (string, error) {
@@ -88,11 +89,12 @@ func (s *Service) SendForgotPasswordEmail(to, token string) error {
 }
 
 type SubscriptionData struct {
-	Token string
+	Token   string
+	BaseURL string
 }
 
 func (s *Service) SendSubscriptionConfirmEmail(to, token string) error {
-	body, err := s.render("subscription_confirm.html", SubscriptionData{Token: token})
+	body, err := s.render("subscription_confirm.html", SubscriptionData{Token: token, BaseURL: s.baseURL})
 	if err != nil {
 		return err
 	}
@@ -104,14 +106,16 @@ type PostEmailData struct {
 	Content    template.HTML
 	PixelURL   string
 	UnsubToken string
+	BaseURL    string
 }
 
 func (s *Service) SendPostEmail(to, token string, p *domain.Post, deliveryID string) error {
 	data := PostEmailData{
 		Title:      p.Title,
 		Content:    template.HTML(p.Content),
-		PixelURL:   fmt.Sprintf("http://localhost:3000/post-deliveries/%s/pixel", deliveryID),
+		PixelURL:   fmt.Sprintf("%s/post-deliveries/%s/pixel", s.baseURL, deliveryID),
 		UnsubToken: token,
+		BaseURL:    s.baseURL,
 	}
 	body, err := s.render("post.html", data)
 	if err != nil {
