@@ -10,7 +10,8 @@ env:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    
+    outputs:
+      registry: ${{ steps.login-ecr.outputs.registry }}
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -39,6 +40,10 @@ jobs:
           ${{ steps.login-ecr.outputs.registry }}/newsletter-go:latest
           ${{ steps.login-ecr.outputs.registry }}/newsletter-go:${{ github.sha }}
 
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
     - name: Copy docker-compose.prod.yml to EC2
       uses: appleboy/scp-action@v0.1.7
       with:
@@ -55,7 +60,39 @@ jobs:
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
-          aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
+          aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ needs.build-and-push.outputs.registry }}
           cd ~/newsletter-go
           docker compose -f docker-compose.prod.yml pull
           docker compose -f docker-compose.prod.yml up -d --remove-orphans
+
+  migrate:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+    - name: Copy db migrations to EC2
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        source: ./db/migrations
+        target: ~/newsletter-go/db/
+
+    - name: Run DB migrations with goose
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          cd ~/newsletter-go
+          # Install goose if not present
+          if ! command -v goose &> /dev/null; then
+            curl -L https://github.com/pressly/goose/releases/download/v3.16.0/goose_linux_amd64 -o goose
+            chmod +x goose
+            sudo mv goose /usr/local/bin/
+          fi
+          # Run migrations (wait for DB to be ready)
+          for i in {1..10}; do
+            goose -dir db/migrations postgres "postgres://postgres:mysecretpassword@localhost:5432/postgres?sslmode=disable" up && break || sleep 5
+          done
