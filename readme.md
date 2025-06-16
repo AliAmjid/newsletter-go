@@ -98,14 +98,90 @@ This project uses [dotenvx](https://dotenvx.com/) for secure environment variabl
 
 For more information, visit [dotenvx documentation](https://dotenvx.com/docs/).
 
-## Database migrations
-DB migration files are stored in `db/migrations` folder. To apply migrations call the following command:
+## Database
+This project uses **PostgreSQL** as the primary relational database, and [`goose`](https://github.com/pressly/goose) migration tool for managing database schema changes and migrations.
+
+Below you’ll find the list of migration tables and instructions on how to use goose with this project.
+
+
+### Tables diagram
+![Database schema](./docs/assets/database-schema.svg)
+
+### Tables
+
+#### user
+| Name | Type | Settings | References |
+| - | - | - | - |
+| **id** | UUID | 🔑 PK, null | |
+| **email** | TEXT | not null, unique | |
+| **created_at** | TIMESTAMP | not null, default: now() | |
+| **firebase_uid** | TEXT | null, unique | |
+
+#### password_reset_tokens
+| Name | Type | Settings | References |
+| - | - | - | - |
+| **token** | TEXT | 🔑 PK, null | |
+| **user_id** | UUID | null | fk_password_reset_tokens_user_id_user | 
+| **expires_at** | TIMESTAMP | not null | |
+| **created_at** | TIMESTAMP | not null, default: now() | |
+
+#### newsletter
+| Name | Type | Settings | References |
+| - | - | - | - |
+| **id** | UUID | 🔑 PK, null | |
+| **name** | TEXT | not null | |
+| **description** | TEXT | null | |
+| **owner_id** | UUID | not null | fk_newsletter_owner_id_user |
+| **created_at** | TIMESTAMP | not null, default: now() | |
+
+#### subscription
+| Name | Type | Settings | References |
+| - | - | - | - |
+| **id** | UUID | 🔑 PK, null | |
+| **newsletter_id** | UUID | not null | fk_subscription_newsletter_id_newsletter |
+| **email** | TEXT | not null | |
+| **token** | TEXT | not null, unique | |
+| **confirmed_at** | TIMESTAMP | null | |
+| **created_at** | TIMESTAMP | not null, default: now() | |
+
+#### post
+| Name | Type | Settings | References |
+| - | - | - | - | 
+| **id** | UUID | 🔑 PK, null | |
+| **newsletter_id** | UUID | not null | fk_post_newsletter_id_newsletter |
+| **title** | TEXT | not null | |
+| **content** | TEXT | not null | |
+| **published_at** | TIMESTAMP | null | |
+
+#### post_delivery
+| Name | Type | Settings | References |
+| - | - | - | - |
+| **id** | UUID | 🔑 PK, null | |
+| **post_id** | UUID | not null | fk_post_delivery_post_id_post |
+| **subscription_id** | UUID | not null | fk_post_delivery_subscription_id_subscription |
+| **opened** | BOOLEAN | not null, default: false | |
+
+
+### Relationships
+- **newsletter to user**: many_to_one
+- **password_reset_tokens to user**: many_to_one
+- **post to newsletter**: many_to_one
+- **subscription to newsletter**: many_to_one
+- **post_delivery to post**: many_to_one
+- **post_delivery to subscription**: many_to_one
+
+### Database migrations
+This project uses [`goose`](https://github.com/pressly/goose) for managing database migrations.
+
+Before applying migrations, make sure to have goose tool instaled
+```bash
+go install github.com/pressly/goose/v3/cmd/goose@latest
+```
+
+DB migration files are stored in `db/migrations` folder. To apply migrations call the following command from root folder:
 
 ```bash
-goose postgres "postgres://postgres:mysecretpassword@localhost:5432/postgres?sslmode=disable" up
-
-## Documentation of implementation
-[Go to documentation](./docs/implementation/readme.md)
+goose -dir db/migrations postgres POSTGRES_CONNECTION_STRING up
 ```
 
 To create a new migration:
@@ -113,3 +189,5 @@ To create a new migration:
 ```bash
 goose create add_new_table sql
 ```
+This will generate a new pair of .sql files (up and down) in the db/migrations directory.
+For more information, refer to the goose documentation.
