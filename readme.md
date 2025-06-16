@@ -2,7 +2,43 @@
 
 ### Diagram
 
-![img.png](docs/img.png)
+![img.png](https://uml.planttext.com/plantuml/png/NP9FJm8n4CNl_HIJFS41lNCmWg1WK14m7iH3jpjP9fGMErqC6h-xxRB0BhVclT_apP_UifVE5nijF7cDy8pVhD5xT9q72psdLkHH-SAX459vwo0PcWpU65q2aik742uWqkIXFXaj5bCOeAOTkZrCvBu2Uzij_0g0ZrxXLp2I9jFeFgDmZcp8yo9bvIYzaAUM_LduQsI7PfHahALM2jUYA-aokYxNekjo6NqIGdGclKnZO1AjtE7yTR8qhInjb-63lX1AsoA3v9uSHd9fOWzeF2dfoPgIEvhHEXPCqMt8Nv4zL5X7F-U2Wpb-ES9FadHUcAKPRi8BvkXsfB14Aqk8U2ZeT6xAGtIXF9F3hmBPCxHcm_a2UjDnMqGxOgVDTO7CpguHqeB983DecvCI9o3IzH52nKvg2il1QwRSmEFxeaaV-m-aMg5QmpOAp64-RfA3Vc3kPcy3i84fDt11L0C6Z35yJ8mRu7y0)
+The architecture follows go-clean-arch principles:
+![diagram.png](https://raw.githubusercontent.com/bxcodec/go-clean-arch/master/clean-arch.png)
+```
+@startuml
+title Newsletter-Go Architecture
+
+actor "End User" as User
+
+rectangle "HTTP Delivery Layer" as App {
+  [Auth Handler]
+  [Newsletter Handler]
+  [Subscriber Handler]
+  [Post Handler]
+}
+
+rectangle "Usecase Layer" as Usecases {
+  [Auth Usecase]
+  [Newsletter Usecase]
+  [Subscriber Usecase]
+  [Post Usecase]
+}
+
+database "PostgreSQL\n(db)" as DB
+
+cloud "Firebase\nAuthentication" as FirebaseAuth
+cloud "Permit.io\nAuthorization" as PermitIO
+cloud "Mailgun\nEmail Service" as Mailgun
+
+User --> App : HTTP requests (REST API)
+App --> Usecases : invoke business logic
+Usecases --> FirebaseAuth : validate/sign JWT
+Usecases --> PermitIO : check permissions
+Usecases --> DB : CRUD operations
+Usecases --> Mailgun : send emails
+```
+
 ## Project Structure
 
 The source code follows a simplified version of the [go-clean-arch](https://github.com/bxcodec/go-clean-arch) layout:

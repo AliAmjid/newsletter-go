@@ -12,15 +12,6 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  migrations:
-    image: 590183723398.dkr.ecr.eu-central-1.amazonaws.com/newsletter-go:latest
-    entrypoint: []
-    command: goose -dir db/migrations postgres "postgres://postgres:mysecretpassword@db:5432/postgres?sslmode=disable" up
-    depends_on:
-      - db
-    networks:
-      - newsletter-go-network
-
   app-prod:
     image: 590183723398.dkr.ecr.eu-central-1.amazonaws.com/newsletter-go:latest
     depends_on:

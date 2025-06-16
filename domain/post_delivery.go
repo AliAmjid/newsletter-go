@@ -4,16 +4,16 @@ import "context"
 
 // PostDelivery links a post with a subscriber and tracks open state.
 type PostDelivery struct {
-	ID             string
-	PostID         string
-	SubscriptionID string
-	Opened         bool
+	ID             string `json:"id"`
+	PostID         string `json:"postId"`
+	SubscriptionID string `json:"subscriptionId"`
+	Opened         bool   `json:"opened"`
 }
 
 type PostDeliveryInfo struct {
-	ID     string
-	Email  string
-	Opened bool
+	ID     string `json:"id"`
+	Email  string `json:"email"`
+	Opened bool   `json:"opened"`
 }
 
 type PostDeliveryRepository interface {

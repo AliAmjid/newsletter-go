@@ -138,7 +138,6 @@ func (h *PostHandler) listPosts(w http.ResponseWriter, r *http.Request) {
 		b := false
 		pubFilter = &b
 	case "", "null":
-		// no filter
 	default:
 		respondWithError(w, http.StatusBadRequest, "invalid published value")
 		return
