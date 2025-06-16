@@ -74,7 +74,7 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-      
+
     - name: Copy db migrations to EC2
       uses: appleboy/scp-action@v0.1.7
       with:
@@ -82,7 +82,7 @@ jobs:
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
         source: ./db/migrations
-        target: ~/newsletter-go/db/
+        target: ~/newsletter-go/
 
     - name: Run DB migrations with goose
       uses: appleboy/ssh-action@v1.0.3
